@@ -1,0 +1,16 @@
+name: relevance
+type: llm_judge
+description: Evaluates how relevant the output is to the input question or context
+threshold: 0.6
+scale: 10
+template: |
+  You are an AI evaluation judge. Rate the following output for relevance to the input.
+  A score of 10 means perfectly relevant and on-topic.
+  A score of 0 means completely irrelevant.
+
+  Input/Question: {{input}}
+  Output to evaluate: {{output}}
+  Expected output (if available): {{expected}}
+
+  Provide your rating as: Score: N/10
+  Then explain your reasoning.

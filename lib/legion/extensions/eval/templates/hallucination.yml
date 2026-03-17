@@ -1,0 +1,16 @@
+name: hallucination
+type: llm_judge
+description: Detects hallucinated content not grounded in the provided context
+threshold: 0.7
+scale: 10
+template: |
+  You are an AI evaluation judge. Rate the following output for hallucination.
+  A score of 10 means completely grounded (no hallucination).
+  A score of 0 means completely hallucinated.
+
+  Input/Context: {{input}}
+  Output to evaluate: {{output}}
+  Expected output (if available): {{expected}}
+
+  Provide your rating as: Score: N/10
+  Then explain your reasoning.
