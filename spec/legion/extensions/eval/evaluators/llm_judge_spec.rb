@@ -54,4 +54,52 @@ RSpec.describe Legion::Extensions::Eval::Evaluators::LlmJudge do
       )
     end
   end
+
+  context 'with structured output (function calling)' do
+    let(:structured_result) do
+      { score: 0.85, passed: true, explanation: 'Well grounded.', evidence: ['quote 1'] }
+    end
+
+    before do
+      stub_const('Legion::LLM', Class.new do
+        def self.chat(**); end
+        def self.structured(**); end
+      end)
+      allow(Legion::LLM).to receive(:respond_to?).and_call_original
+      allow(Legion::LLM).to receive(:structured).and_return(structured_result)
+    end
+
+    it 'uses structured output when available' do
+      result = evaluator.evaluate(input: 'q', output: 'a')
+      expect(result[:score]).to eq(0.85)
+      expect(result[:passed]).to be true
+      expect(result[:explanation]).to eq('Well grounded.')
+      expect(result[:evidence]).to eq(['quote 1'])
+    end
+
+    it 'passes JUDGE_SCHEMA to structured call' do
+      evaluator.evaluate(input: 'q', output: 'a')
+      expect(Legion::LLM).to have_received(:structured).with(
+        hash_including(schema: Legion::Extensions::Eval::Evaluators::LlmJudge::JUDGE_SCHEMA)
+      )
+    end
+  end
+
+  context 'structured output fallback to regex' do
+    before do
+      stub_const('Legion::LLM', Class.new do
+        def self.chat(**); end
+        def self.structured(**); end
+      end)
+      allow(Legion::LLM).to receive(:respond_to?).and_call_original
+      allow(Legion::LLM).to receive(:structured).and_raise(StandardError, 'structured failed')
+      allow(Legion::LLM).to receive(:chat).and_return(llm_response)
+    end
+
+    it 'falls back to regex extraction' do
+      result = evaluator.evaluate(input: 'q', output: 'a')
+      expect(result[:score]).to eq(0.8)
+      expect(result[:passed]).to be true
+    end
+  end
 end
