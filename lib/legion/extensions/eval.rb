@@ -8,6 +8,7 @@ require_relative 'eval/helpers/template_loader'
 require_relative 'eval/helpers/annotation_schema'
 require_relative 'eval/runners/evaluation'
 require_relative 'eval/runners/annotation'
+require_relative 'eval/runners/agentic_review'
 require_relative 'eval/client'
 
 module Legion

@@ -6,6 +6,7 @@ module Legion
       class Client
         include Runners::Evaluation
         include Runners::Annotation
+        include Runners::AgenticReview
 
         def initialize(db: nil, **opts)
           @db = db
