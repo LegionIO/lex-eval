@@ -4,6 +4,7 @@ require_relative 'eval/version'
 require_relative 'eval/evaluators/base'
 require_relative 'eval/evaluators/llm_judge'
 require_relative 'eval/evaluators/code_evaluator'
+require_relative 'eval/helpers/template_loader'
 require_relative 'eval/runners/evaluation'
 require_relative 'eval/client'
 

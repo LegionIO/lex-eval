@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'yaml'
-
 module Legion
   module Extensions
     module Eval
@@ -25,18 +23,15 @@ module Legion
           end
 
           def list_evaluators(**)
-            template_dir = File.join(__dir__, '..', 'templates')
-            return { evaluators: [] } unless Dir.exist?(template_dir)
-
-            builtin = Dir.glob(File.join(template_dir, '*.yml')).map do |f|
-              YAML.safe_load_file(f, symbolize_names: true)
-            end
-            { evaluators: builtin }
+            { evaluators: Helpers::TemplateLoader.new.list_templates }
           end
 
-          private
-
-          def build_evaluator(name, config)
+          def build_evaluator(name, config = {})
+            if config.empty?
+              loader = Helpers::TemplateLoader.new
+              template_config = loader.load_template(name.to_s)
+              config = template_config if template_config
+            end
             type = config[:type]&.to_sym || :llm_judge
             case type
             when :llm_judge then Evaluators::LlmJudge.new(name: name, config: config)
