@@ -1,0 +1,16 @@
+name: jailbreak_detector
+version: "1.0"
+type: pattern
+phase: before
+action: block
+patterns:
+  - "ignore previous instructions"
+  - "ignore all previous"
+  - "disregard all prior"
+  - "you are now"
+  - "pretend you are"
+  - "act as if you"
+  - "from now on you"
+  - "forget your instructions"
+  - "override your system prompt"
+fallback_response: "I cannot process that request."

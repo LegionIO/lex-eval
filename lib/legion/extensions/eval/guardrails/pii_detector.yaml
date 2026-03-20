@@ -1,0 +1,10 @@
+name: pii_detector
+version: "1.0"
+type: pattern
+phase: after
+action: warn
+patterns:
+  - "\\d{3}-\\d{2}-\\d{4}"
+  - "\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}"
+  - "\\(\\d{3}\\)\\s?\\d{3}-\\d{4}"
+fallback_response: "Response may contain sensitive information."

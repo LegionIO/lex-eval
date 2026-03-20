@@ -1,0 +1,12 @@
+name: toxicity_detector
+version: "1.0"
+type: pattern
+phase: both
+action: warn
+patterns:
+  - "kill yourself"
+  - "harm yourself"
+  - "instructions for making"
+  - "how to build a bomb"
+  - "how to hack into"
+fallback_response: "This content has been flagged for review."

@@ -19,3 +19,8 @@ module Legion
     end
   end
 end
+
+if defined?(Legion::LLM::Hooks)
+  require_relative 'eval/helpers/guardrails'
+  Legion::Extensions::Eval::Helpers::Guardrails.register_hooks!
+end
