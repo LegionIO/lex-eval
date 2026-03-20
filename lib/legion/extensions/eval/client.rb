@@ -5,8 +5,10 @@ module Legion
     module Eval
       class Client
         include Runners::Evaluation
+        include Runners::Annotation
 
-        def initialize(**opts)
+        def initialize(db: nil, **opts)
+          @db = db
           @opts = opts
         end
       end
