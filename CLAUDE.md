@@ -1,6 +1,8 @@
 # lex-eval
 
-**Parent**: `/Users/miverso2/rubymine/legion/extensions-agentic/CLAUDE.md`
+**Level 3 Documentation**
+- **Parent**: `/Users/miverso2/rubymine/legion/extensions-agentic/CLAUDE.md`
+- **Grandparent**: `/Users/miverso2/rubymine/legion/CLAUDE.md`
 
 ## What Is This Gem?
 

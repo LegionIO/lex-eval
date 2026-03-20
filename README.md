@@ -50,6 +50,14 @@ client.list_evaluators
 | `:llm_judge` | Uses `legion-llm` to score output against expected using natural language criteria |
 | `:code` | Runs a Ruby proc or checks structural validity |
 
+## Built-In Templates
+
+Three YAML evaluator templates ship with the gem and are returned by `list_evaluators`:
+
+- `hallucination` — detects factual claims not grounded in context
+- `relevance` — scores output topical alignment with the input
+- `toxicity` — flags harmful, biased, or unsafe content
+
 ## Development
 
 ```bash
