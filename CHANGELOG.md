@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1] - 2026-03-20
+
+### Added
+- `Helpers::Guardrails` for loading YAML pattern rules and registering before/after hooks with `Legion::LLM::Hooks`
+- Three built-in guardrail templates: `jailbreak_detector`, `pii_detector`, `toxicity_detector`
+- Boot registration: automatically registers guardrails when `Legion::LLM::Hooks` is available
+
 ## [0.2.0] - 2026-03-20
 
 ### Added
