@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2] - 2026-03-19
+
+### Added
+- `Runners::Online`: online evaluation runner with configurable evaluators, sample rate, and per-evaluator error isolation
+- `Actor::Online`: subscription actor listening on `llm.response` exchange; guarded by `enabled?` checking transport availability and settings
+- Settings defaults for `eval.online`: `enabled: true`, `evaluators: ['toxicity']`, `sample_rate: 1.0`
+- `Client` now includes `Runners::Online`
+
 ## [0.2.1] - 2026-03-20
 
 ### Added
