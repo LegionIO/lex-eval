@@ -1,0 +1,19 @@
+name: summarization
+version: 1
+type: llm_judge
+category: quality
+requires_expected: true
+description: Evaluates summary quality for completeness, conciseness, and accuracy
+threshold: 0.7
+template: |
+  You are an AI evaluation judge specializing in summarization.
+  Assess the summary for completeness, conciseness, and accuracy
+  compared to the source material and expected summary.
+  A score of 1.0 means the summary is complete, concise, and accurate.
+  A score of 0.0 means the summary is missing key information or inaccurate.
+
+  Source material: {{input}}
+  Generated summary: {{output}}
+  Expected summary: {{expected}}
+
+  Provide your assessment.

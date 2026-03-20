@@ -1,0 +1,18 @@
+name: code_readability
+version: 1
+type: llm_judge
+category: code
+requires_expected: false
+description: Evaluates code readability, naming, structure, and maintainability
+threshold: 0.6
+template: |
+  You are an AI evaluation judge specializing in code quality.
+  Assess the code for readability, naming conventions, structure,
+  and maintainability.
+  A score of 1.0 means the code is exceptionally clear and well-structured.
+  A score of 0.0 means the code is unreadable or unmaintainable.
+
+  Context: {{input}}
+  Code to evaluate: {{output}}
+
+  Provide your assessment.

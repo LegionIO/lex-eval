@@ -70,5 +70,29 @@ RSpec.describe Legion::Extensions::Eval::Runners::Evaluation do
       names = result[:evaluators].map { |e| e[:name] }
       expect(names).to include('hallucination', 'relevance', 'toxicity')
     end
+
+    it 'returns all 12 built-in templates' do
+      result = host.list_evaluators
+      expect(result[:evaluators].size).to eq(12)
+    end
+
+    it 'includes category and requires_expected fields' do
+      result = host.list_evaluators
+      result[:evaluators].each do |tmpl|
+        expect(tmpl).to have_key(:category)
+        expect(tmpl).to have_key(:requires_expected)
+      end
+    end
+
+    it 'includes all expected template names' do
+      result = host.list_evaluators
+      names = result[:evaluators].map { |e| e[:name] }
+      expect(names).to contain_exactly(
+        'hallucination', 'relevance', 'toxicity',
+        'faithfulness', 'qa_correctness', 'sql_generation',
+        'code_generation', 'code_readability', 'tool_calling',
+        'human_vs_ai', 'rag_relevancy', 'summarization'
+      )
+    end
   end
 end

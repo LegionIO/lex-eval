@@ -1,0 +1,18 @@
+name: qa_correctness
+version: 1
+type: llm_judge
+category: task
+requires_expected: true
+description: Evaluates whether the answer correctly addresses the question
+threshold: 0.8
+template: |
+  You are an AI evaluation judge. Assess whether the answer correctly
+  and completely addresses the question, compared to the expected answer.
+  A score of 1.0 means the answer is fully correct and complete.
+  A score of 0.0 means the answer is completely wrong.
+
+  Question: {{input}}
+  Answer to evaluate: {{output}}
+  Expected answer: {{expected}}
+
+  Provide your assessment.

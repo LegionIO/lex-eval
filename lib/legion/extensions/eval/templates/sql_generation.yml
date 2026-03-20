@@ -1,0 +1,19 @@
+name: sql_generation
+version: 1
+type: llm_judge
+category: code
+requires_expected: true
+description: Evaluates whether generated SQL is correct and matches the expected query
+threshold: 0.7
+template: |
+  You are an AI evaluation judge specializing in SQL.
+  Assess whether the generated SQL query correctly implements the request
+  and produces equivalent results to the expected query.
+  A score of 1.0 means the SQL is correct and semantically equivalent.
+  A score of 0.0 means the SQL is completely wrong or would produce incorrect results.
+
+  Request: {{input}}
+  Generated SQL: {{output}}
+  Expected SQL: {{expected}}
+
+  Provide your assessment.

@@ -1,0 +1,19 @@
+name: tool_calling
+version: 1
+type: llm_judge
+category: task
+requires_expected: true
+description: Evaluates whether the correct tools were called with proper parameters
+threshold: 0.8
+template: |
+  You are an AI evaluation judge specializing in tool usage.
+  Assess whether the tool calls made are correct, use proper parameters,
+  and match the expected tool usage pattern.
+  A score of 1.0 means all tool calls are correct with proper parameters.
+  A score of 0.0 means the wrong tools were called or parameters are incorrect.
+
+  User request: {{input}}
+  Actual tool calls: {{output}}
+  Expected tool calls: {{expected}}
+
+  Provide your assessment.

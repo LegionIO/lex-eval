@@ -1,0 +1,17 @@
+name: human_vs_ai
+version: 1
+type: llm_judge
+category: quality
+requires_expected: false
+description: Assesses whether the output reads as natural human-written text
+threshold: 0.5
+template: |
+  You are an AI evaluation judge. Assess whether this output reads as
+  natural, human-like text or as obviously AI-generated.
+  A score of 1.0 means the text is indistinguishable from human writing.
+  A score of 0.0 means the text is obviously AI-generated with typical patterns.
+
+  Context: {{input}}
+  Text to evaluate: {{output}}
+
+  Provide your assessment.
