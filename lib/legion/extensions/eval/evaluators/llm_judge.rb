@@ -23,13 +23,23 @@ module Legion
           }.freeze
 
           def evaluate(input:, output:, expected: nil, context: {}) # rubocop:disable Lint/UnusedMethodArgument
+            if defined?(Legion::Telemetry::OpenInference)
+              Legion::Telemetry::OpenInference.evaluator_span(template: @config[:name] || 'unknown') do |_span|
+                evaluate_impl(input: input, output: output, expected: expected)
+              end
+            else
+              evaluate_impl(input: input, output: output, expected: expected)
+            end
+          end
+
+          private
+
+          def evaluate_impl(input:, output:, expected:)
             prompt = render_template(input: input, output: output, expected: expected)
             evaluate_structured(prompt)
           rescue StandardError
             evaluate_regex_fallback(prompt)
           end
-
-          private
 
           def evaluate_structured(prompt)
             return evaluate_regex_fallback(prompt) unless structured_available?
