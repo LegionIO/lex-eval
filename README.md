@@ -52,11 +52,40 @@ client.list_evaluators
 
 ## Built-In Templates
 
-Three YAML evaluator templates ship with the gem and are returned by `list_evaluators`:
+12 YAML evaluator templates ship with the gem and are returned by `list_evaluators`:
 
-- `hallucination` — detects factual claims not grounded in context
-- `relevance` — scores output topical alignment with the input
-- `toxicity` — flags harmful, biased, or unsafe content
+`hallucination`, `relevance`, `toxicity`, `faithfulness`, `qa_correctness`, `sql_generation`, `code_generation`, `code_readability`, `tool_calling`, `human_vs_ai`, `rag_relevancy`, `summarization`
+
+## Annotation Queues
+
+Human-in-the-loop annotation for labeling LLM outputs:
+
+```ruby
+client = Legion::Extensions::Eval::Client.new(db: Sequel.sqlite)
+Legion::Extensions::Eval::Helpers::AnnotationSchema.create_tables(client.instance_variable_get(:@db))
+
+client.create_queue(name: 'review', description: 'Manual review queue')
+client.enqueue_items(queue_name: 'review', items: [{ input: 'q', output: 'a' }])
+client.assign_next(queue_name: 'review', annotator: 'alice', count: 5)
+client.complete_annotation(item_id: 1, label_score: 0.9, label_category: 'correct')
+client.queue_stats(queue_name: 'review')
+client.export_to_dataset(queue_name: 'review')
+```
+
+## Agentic Review
+
+AI-reviews-AI with confidence-based escalation:
+
+```ruby
+client = Legion::Extensions::Eval::Client.new
+result = client.review_output(input: 'question', output: 'answer')
+# => { confidence: 0.92, recommendation: 'approve', issues: [], explanation: '...' }
+
+result = client.review_with_escalation(input: 'q', output: 'a')
+# => { action: :auto_approve, escalated: false, ... }  (confidence > 0.9)
+# => { action: :light_review, escalated: true, priority: :low, ... }  (0.6-0.9)
+# => { action: :full_review, escalated: true, priority: :high, ... }  (< 0.6)
+```
 
 ## Development
 

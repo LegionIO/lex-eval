@@ -9,6 +9,9 @@
 - TemplateLoader with lex-prompt integration and YAML fallback
 - seed_prompts for bootstrapping eval templates into lex-prompt
 - Public build_evaluator API on Client
+- Annotation queues: create_queue, enqueue, assign, complete, skip, stats, export_to_dataset
+- AnnotationSchema helper for DB table creation
+- Agentic review: review_output, review_with_escalation with confidence-based routing
 
 ### Changed
 - LlmJudge uses structured output extraction with regex fallback
