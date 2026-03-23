@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3] - 2026-03-22
+
+### Changed
+- Add legion-* sub-gems as runtime dependencies (legion-logging, legion-settings, legion-cache, legion-crypt, legion-data, legion-json, legion-transport)
+- Replace direct `Legion::Logging.warn` calls in `Runners::Online` with injected `log` helper
+- Update spec_helper with real sub-gem helper stubs (replaces hand-rolled Legion::Logging stub)
+
 ## [0.2.2] - 2026-03-19
 
 ### Added

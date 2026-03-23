@@ -5,6 +5,7 @@ module Legion
     module Eval
       module Runners
         module Online
+          include Legion::Extensions::Helpers::Lex if defined?(Legion::Extensions::Helpers::Lex)
           def evaluate_response(response:, evaluators: nil, sample_rate: 1.0, **)
             evaluator_names = evaluators || configured_evaluators
             effective_rate  = sample_rate || configured_sample_rate
@@ -18,7 +19,7 @@ module Legion
 
             { evaluated: true, scores: scores, sampled: true }
           rescue StandardError => e
-            Legion::Logging.warn("lex-eval online: evaluate_response failed: #{e.message}") if defined?(Legion::Logging)
+            log.warn("lex-eval online: evaluate_response failed: #{e.message}")
             { evaluated: false, reason: :error, error: e.message, sampled: true }
           end
 
@@ -34,7 +35,7 @@ module Legion
             )
             result.dig(:summary, :avg_score)
           rescue StandardError => e
-            Legion::Logging.warn("lex-eval online: evaluator #{name} failed: #{e.message}") if defined?(Legion::Logging)
+            log.warn("lex-eval online: evaluator #{name} failed: #{e.message}")
             nil
           end
 
