@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-03-24
+
+### Added
+- `review_experiment` A/B output comparison in AgenticReview — runs both outputs through `review_output`, compares confidence scores, declares winner with delta
+- Specs for `review_experiment` covering winner selection, tie detection, delta calculation, and error handling
+
 ### Changed
 - Add `caller: { extension: 'lex-eval', operation: '...' }` identity parameter to all Legion::LLM call sites: `LlmJudge#evaluate_structured`, `LlmJudge#evaluate_regex_fallback`, and `AgenticReview#review_output`
 

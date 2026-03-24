@@ -42,8 +42,29 @@ module Legion
             review.merge(action: action, escalated: true, priority: priority)
           end
 
-          def review_experiment(**)
-            { reviewed: false, reason: 'not_yet_implemented' }
+          def review_experiment(input:, output_a:, output_b:, review_prompt: nil, **)
+            review_a = review_output(input: input, output: output_a, review_prompt: review_prompt)
+            review_b = review_output(input: input, output: output_b, review_prompt: review_prompt)
+
+            conf_a = review_a[:confidence] || 0.0
+            conf_b = review_b[:confidence] || 0.0
+            delta = (conf_a - conf_b).round(3)
+
+            winner = if delta.abs < 0.05
+                       :tie
+                     elsif conf_a > conf_b
+                       :a
+                     else
+                       :b
+                     end
+
+            { reviewed: true,
+              winner:   winner,
+              delta:    delta,
+              review_a: review_a,
+              review_b: review_b }
+          rescue StandardError => e
+            { reviewed: false, reason: "experiment error: #{e.message}" }
           end
 
           private

@@ -85,6 +85,111 @@ RSpec.describe Legion::Extensions::Eval::Runners::AgenticReview do
     end
   end
 
+  describe '#review_experiment' do
+    context 'when output_a scores higher' do
+      before do
+        call_count = 0
+        allow(Legion::LLM).to receive(:structured) do
+          call_count += 1
+          if call_count == 1
+            { confidence: 0.9, recommendation: 'approve', issues: [], explanation: 'Excellent.' }
+          else
+            { confidence: 0.6, recommendation: 'revise', issues: [], explanation: 'Decent.' }
+          end
+        end
+      end
+
+      it 'declares output_a as winner' do
+        result = host.review_experiment(input: 'q', output_a: 'good answer', output_b: 'ok answer')
+        expect(result[:winner]).to eq(:a)
+        expect(result[:reviewed]).to be true
+      end
+
+      it 'calculates positive delta' do
+        result = host.review_experiment(input: 'q', output_a: 'good', output_b: 'ok')
+        expect(result[:delta]).to eq(0.3)
+      end
+    end
+
+    context 'when output_b scores higher' do
+      before do
+        call_count = 0
+        allow(Legion::LLM).to receive(:structured) do
+          call_count += 1
+          if call_count == 1
+            { confidence: 0.5, recommendation: 'revise', issues: [], explanation: 'Weak.' }
+          else
+            { confidence: 0.85, recommendation: 'approve', issues: [], explanation: 'Strong.' }
+          end
+        end
+      end
+
+      it 'declares output_b as winner' do
+        result = host.review_experiment(input: 'q', output_a: 'weak', output_b: 'strong')
+        expect(result[:winner]).to eq(:b)
+        expect(result[:reviewed]).to be true
+      end
+
+      it 'calculates negative delta' do
+        result = host.review_experiment(input: 'q', output_a: 'weak', output_b: 'strong')
+        expect(result[:delta]).to eq(-0.35)
+      end
+    end
+
+    context 'when scores are within 0.05 of each other' do
+      before do
+        call_count = 0
+        allow(Legion::LLM).to receive(:structured) do
+          call_count += 1
+          if call_count == 1
+            { confidence: 0.8, recommendation: 'approve', issues: [], explanation: 'Good.' }
+          else
+            { confidence: 0.78, recommendation: 'approve', issues: [], explanation: 'Good too.' }
+          end
+        end
+      end
+
+      it 'declares a tie' do
+        result = host.review_experiment(input: 'q', output_a: 'answer a', output_b: 'answer b')
+        expect(result[:winner]).to eq(:tie)
+        expect(result[:reviewed]).to be true
+      end
+    end
+
+    context 'when both reviews are included in the result' do
+      before do
+        call_count = 0
+        allow(Legion::LLM).to receive(:structured) do
+          call_count += 1
+          if call_count == 1
+            { confidence: 0.9, recommendation: 'approve', issues: [], explanation: 'A is great.' }
+          else
+            { confidence: 0.6, recommendation: 'revise', issues: [], explanation: 'B is ok.' }
+          end
+        end
+      end
+
+      it 'includes review_a and review_b in result' do
+        result = host.review_experiment(input: 'q', output_a: 'a', output_b: 'b')
+        expect(result[:review_a]).to include(confidence: 0.9, explanation: 'A is great.')
+        expect(result[:review_b]).to include(confidence: 0.6, explanation: 'B is ok.')
+      end
+    end
+
+    context 'when review_output raises an error' do
+      before do
+        allow(host).to receive(:review_output).and_raise(StandardError, 'LLM unavailable')
+      end
+
+      it 'returns reviewed: false with reason' do
+        result = host.review_experiment(input: 'q', output_a: 'a', output_b: 'b')
+        expect(result[:reviewed]).to be false
+        expect(result[:reason]).to include('experiment error')
+        expect(result[:reason]).to include('LLM unavailable')
+      end
+    end
+  end
+
   describe '#review_output error handling' do
     before do
       allow(Legion::LLM).to receive(:structured).and_raise(StandardError, 'LLM unavailable')
