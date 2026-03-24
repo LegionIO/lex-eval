@@ -26,7 +26,8 @@ module Legion
           def review_output(input:, output:, review_prompt: nil, **)
             prompt = build_review_message(review_prompt || default_review_prompt, input, output)
             Legion::LLM.structured(message: prompt, schema: REVIEW_SCHEMA,
-                                   intent: { capability: :reasoning })
+                                   intent: { capability: :reasoning },
+                                   caller: { extension: 'lex-eval', operation: 'agentic_review' })
           rescue StandardError => e
             { confidence: 0.0, recommendation: 'reject',
               issues: [], explanation: "review error: #{e.message}" }

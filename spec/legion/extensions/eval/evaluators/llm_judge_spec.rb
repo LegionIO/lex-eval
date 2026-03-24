@@ -50,7 +50,8 @@ RSpec.describe Legion::Extensions::Eval::Evaluators::LlmJudge do
       evaluator.evaluate(input: 'my_input', output: 'my_output', expected: 'my_expected')
       expect(Legion::LLM).to have_received(:chat).with(
         message: 'Rate this: my_input -> my_output (expected: my_expected)',
-        intent:  { capability: :reasoning }
+        intent:  { capability: :reasoning },
+        caller:  { extension: 'lex-eval', operation: 'judge' }
       )
     end
   end

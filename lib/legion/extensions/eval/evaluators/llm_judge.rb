@@ -45,7 +45,8 @@ module Legion
             return evaluate_regex_fallback(prompt) unless structured_available?
 
             result = Legion::LLM.structured(message: prompt, schema: JUDGE_SCHEMA,
-                                            intent: { capability: :reasoning })
+                                            intent: { capability: :reasoning },
+                                            caller: { extension: 'lex-eval', operation: 'judge' })
             { score: result[:score], passed: result[:passed],
               explanation: result[:explanation], evidence: result[:evidence] || [] }
           rescue StandardError
@@ -53,7 +54,8 @@ module Legion
           end
 
           def evaluate_regex_fallback(prompt)
-            response = Legion::LLM.chat(message: prompt, intent: { capability: :reasoning })
+            response = Legion::LLM.chat(message: prompt, intent: { capability: :reasoning },
+                                        caller: { extension: 'lex-eval', operation: 'judge' })
             score = extract_score(response.content)
             { score: score, explanation: response.content, passed: score >= threshold, evidence: [] }
           rescue StandardError => e

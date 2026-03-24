@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- Add `caller: { extension: 'lex-eval', operation: '...' }` identity parameter to all Legion::LLM call sites: `LlmJudge#evaluate_structured`, `LlmJudge#evaluate_regex_fallback`, and `AgenticReview#review_output`
+
 ## [0.2.3] - 2026-03-22
 
 ### Changed
