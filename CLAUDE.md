@@ -9,7 +9,7 @@
 LLM output evaluation framework for LegionIO. Provides LLM-as-judge and code-based evaluators for scoring LLM outputs, with per-row pass/fail results and summary statistics.
 
 **Gem**: `lex-eval`
-**Version**: 0.1.0
+**Version**: 0.2.5
 **Namespace**: `Legion::Extensions::Eval`
 
 ## File Structure
@@ -35,6 +35,12 @@ spec/
 - `build_evaluator` selects evaluator type via `config[:type]` (`:llm_judge` or `:code`); defaults to `:llm_judge`
 - `list_evaluators` reads YAML templates from `lib/legion/extensions/eval/templates/`; returns empty array if directory is absent
 - LLM judge requires `legion-llm` to be loaded and started; gracefully degrades otherwise
+
+## Runners
+
+### `Runners::AgenticReview`
+
+- `review_experiment(output_a:, output_b:, **opts)` — A/B experiment comparison. Runs both outputs through `review_output`, compares confidence scores with a 0.05 tie threshold, and returns `{ reviewed: true, winner:, delta:, review_a:, review_b: }`.
 
 ## Development
 
