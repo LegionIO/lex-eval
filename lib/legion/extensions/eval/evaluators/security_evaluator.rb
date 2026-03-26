@@ -9,7 +9,7 @@ module Legion
             shell_execution:        /\b(?:system|exec|spawn|fork|popen|Open3)\s*\(/,
             backtick_execution:     /`[^`]+`/,
             file_deletion:          /\b(?:FileUtils\.rm|FileUtils\.rm_rf|File\.delete|File\.unlink)\b/,
-            dynamic_code_execution: /\b(?:eval|class_eval|module_eval|instance_eval|instance_exec)\s*[\('"]/,
+            dynamic_code_execution: /\b(?:eval|class_eval|module_eval|instance_eval|instance_exec)\s*[('"]/,
             unsafe_require:         /\brequire\s+[^'"]/,
             dynamic_dispatch:       /\.(?:send|public_send|__send__)\s*\([^:'"]/
           }.freeze

@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-03-26
+
+### Added
+- SecurityEvaluator for generated code static analysis (6 dangerous pattern checks)
+- CodeReview runner with 4-stage validation pipeline (syntax, security, specs, LLM review)
+- CodeReviewSubscriber actor with AMQP transport layer
+
 ## [0.2.5] - 2026-03-24
 
 ### Added
