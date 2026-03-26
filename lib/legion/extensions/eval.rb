@@ -15,6 +15,15 @@ require_relative 'eval/runners/online'
 require_relative 'eval/runners/code_review'
 require_relative 'eval/client'
 
+if defined?(Legion::Transport::Exchange)
+  require_relative 'eval/transport/exchanges/codegen'
+  require_relative 'eval/transport/queues/code_review'
+  require_relative 'eval/transport/messages/code_review_requested'
+  require_relative 'eval/transport/messages/code_review_completed'
+end
+
+require_relative 'eval/actors/code_review_subscriber' if defined?(Legion::Extensions::Actors::Subscription)
+
 module Legion
   module Extensions
     module Eval

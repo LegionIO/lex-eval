@@ -50,11 +50,11 @@ RSpec.describe Legion::Extensions::Eval::Runners::CodeReview do
     it 'passes syntax and security for clean code with validation disabled' do
       allow(Legion::Settings).to receive(:dig).and_return(nil)
       allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation).and_return({
-        syntax_check: true,
-        run_specs: false,
-        llm_review: false,
-        quality_gate: { enabled: false }
-      })
+                                                                                                        syntax_check: true,
+                                                                                                        run_specs:    false,
+                                                                                                        llm_review:   false,
+                                                                                                        quality_gate: { enabled: false }
+                                                                                                      })
 
       result = described_class.review_generated(code: valid_code, spec_code: valid_spec, context: {})
       expect(result[:passed]).to be true
@@ -66,11 +66,11 @@ RSpec.describe Legion::Extensions::Eval::Runners::CodeReview do
     it 'returns all stage results' do
       allow(Legion::Settings).to receive(:dig).and_return(nil)
       allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation).and_return({
-        syntax_check: true,
-        run_specs: false,
-        llm_review: false,
-        quality_gate: { enabled: false }
-      })
+                                                                                                        syntax_check: true,
+                                                                                                        run_specs:    false,
+                                                                                                        llm_review:   false,
+                                                                                                        quality_gate: { enabled: false }
+                                                                                                      })
 
       result = described_class.review_generated(code: valid_code, spec_code: '', context: {})
       expect(result[:stages]).to have_key(:syntax)
@@ -80,11 +80,11 @@ RSpec.describe Legion::Extensions::Eval::Runners::CodeReview do
     it 'calculates confidence score' do
       allow(Legion::Settings).to receive(:dig).and_return(nil)
       allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation).and_return({
-        syntax_check: true,
-        run_specs: false,
-        llm_review: false,
-        quality_gate: { enabled: false }
-      })
+                                                                                                        syntax_check: true,
+                                                                                                        run_specs:    false,
+                                                                                                        llm_review:   false,
+                                                                                                        quality_gate: { enabled: false }
+                                                                                                      })
 
       result = described_class.review_generated(code: valid_code, spec_code: '', context: {})
       expect(result[:confidence]).to be_a(Float)
