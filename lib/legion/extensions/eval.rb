@@ -12,6 +12,7 @@ require_relative 'eval/runners/evaluation'
 require_relative 'eval/runners/annotation'
 require_relative 'eval/runners/agentic_review'
 require_relative 'eval/runners/online'
+require_relative 'eval/runners/code_review'
 require_relative 'eval/client'
 
 module Legion

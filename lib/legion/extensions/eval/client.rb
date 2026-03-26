@@ -8,6 +8,7 @@ module Legion
         include Runners::Annotation
         include Runners::AgenticReview
         include Runners::Online
+        include Runners::CodeReview
 
         def initialize(db: nil, **opts)
           @db = db
