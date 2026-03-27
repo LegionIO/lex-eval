@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.4] - 2026-03-27
+
+### Fixed
+- `CodeReviewRequested` and `CodeReviewCompleted` messages: changed from `include` to class inheritance (`< Legion::Transport::Message`)
+
 ## [0.3.3] - 2026-03-27
 
 ### Fixed

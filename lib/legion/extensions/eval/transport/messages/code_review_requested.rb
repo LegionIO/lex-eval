@@ -5,9 +5,7 @@ module Legion
     module Eval
       module Transport
         module Messages
-          class CodeReviewRequested
-            include Legion::Transport::Message
-
+          class CodeReviewRequested < Legion::Transport::Message
             QUEUE = Queues::CodeReview
           end
         end

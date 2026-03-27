@@ -5,10 +5,9 @@ module Legion
     module Eval
       module Transport
         module Messages
-          class CodeReviewCompleted
-            include Legion::Transport::Message
-
+          class CodeReviewCompleted < Legion::Transport::Message
             def initialize(result:, generation_id:)
+              super()
               @result = result
               @generation_id = generation_id
             end
