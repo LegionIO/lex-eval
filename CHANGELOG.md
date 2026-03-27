@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.8] - 2026-03-27
+
+### Fixed
+- Capture exception in `Helpers::Guardrails#load_guardrails` rescue block (`rescue StandardError => e`) and log warning to satisfy CI Rescue Logging lint
+
 ## [0.3.7] - 2026-03-27
 
 ### Fixed

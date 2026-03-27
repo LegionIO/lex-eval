@@ -14,7 +14,8 @@ module Legion
 
               ::Dir.glob(::File.join(dir, '*.yaml')).filter_map do |path|
                 YAML.safe_load_file(path, symbolize_names: true)
-              rescue StandardError
+              rescue StandardError => e
+                log.warn("Failed to load guardrail: #{e.message}")
                 nil
               end
             end
