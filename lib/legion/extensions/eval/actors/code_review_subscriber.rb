@@ -9,6 +9,9 @@ module Legion
         class CodeReviewSubscriber < Legion::Extensions::Actors::Subscription
           QUEUE = defined?(Transport::Queues::CodeReview) ? Transport::Queues::CodeReview : nil
 
+          def runner_class = self.class
+          def runner_function = 'action'
+
           def action(payload)
             code = payload[:runner_code] || payload[:code]
             spec_code = payload[:spec_code] || ''
