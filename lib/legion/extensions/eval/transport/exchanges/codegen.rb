@@ -5,11 +5,14 @@ module Legion
     module Eval
       module Transport
         module Exchanges
-          module Codegen
-            extend Legion::Transport::Exchange
+          class Codegen < Legion::Transport::Exchange
+            def exchange_name
+              'codegen'
+            end
 
-            EXCHANGE_NAME = 'codegen'
-            EXCHANGE_OPTIONS = { type: 'topic', durable: true }.freeze
+            def exchange_options
+              { type: 'topic', durable: true }
+            end
           end
         end
       end

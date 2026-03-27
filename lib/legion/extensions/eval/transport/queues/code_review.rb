@@ -5,13 +5,22 @@ module Legion
     module Eval
       module Transport
         module Queues
-          module CodeReview
-            include Legion::Transport::Queue
+          class CodeReview < Legion::Transport::Queue
+            def queue_name
+              'eval.code_review'
+            end
 
-            QUEUE_NAME = 'eval.code_review'
-            QUEUE_OPTIONS = { durable: true }.freeze
-            BINDING_OPTIONS = { routing_key: 'eval.code_review.requested' }.freeze
-            EXCHANGE = Exchanges::Codegen
+            def queue_options
+              { durable: true }
+            end
+
+            def routing_key
+              'eval.code_review.requested'
+            end
+
+            def exchange
+              Exchanges::Codegen
+            end
           end
         end
       end
