@@ -29,8 +29,16 @@ module Legion
 
             result
           rescue StandardError => e
-            Legion::Logging.warn("CodeReviewSubscriber failed: #{e.message}") if defined?(Legion::Logging)
+            log&.warn("CodeReviewSubscriber failed: #{e.message}")
             { passed: false, verdict: :reject, error: e.message }
+          end
+
+          private
+
+          def log
+            return unless defined?(Legion::Logging)
+
+            Legion::Logging
           end
         end
       end

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.6] - 2026-03-27
+
+### Fixed
+- Replace `Legion::Logging.warn(...)` calls with `log&.warn(...)` using a private `log` helper in `CodeReviewSubscriber` and `Helpers::Guardrails` to satisfy the Helper Migration lint rule
+
 ## [0.3.4] - 2026-03-27
 
 ### Fixed

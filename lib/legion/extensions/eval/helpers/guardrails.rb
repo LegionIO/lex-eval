@@ -58,7 +58,7 @@ module Legion
                     response: { success: false, blocked: true, reason: rule[:name],
                                 content: rule[:fallback_response] || 'Request blocked by guardrail.' } }
                 when :warn
-                  Legion::Logging.warn("Guardrail #{rule[:name]} triggered") if defined?(Legion::Logging)
+                  log&.warn("Guardrail #{rule[:name]} triggered")
                   nil
                 when :fallback
                   { action: :block, rule: rule[:name],
@@ -75,6 +75,12 @@ module Legion
               else
                 ''
               end
+            end
+
+            def log
+              return unless defined?(Legion::Logging)
+
+              Legion::Logging
             end
           end
         end
