@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
+return unless defined?(Legion::Extensions::Actors::Subscription)
+
 module Legion
   module Extensions
     module Eval
       module Actor
-        module CodeReviewSubscriber
-          include Legion::Extensions::Actors::Subscription if
-            defined?(Legion::Extensions::Actors::Subscription) &&
-            Legion::Extensions::Actors::Subscription.is_a?(Module) &&
-            !Legion::Extensions::Actors::Subscription.is_a?(Class)
-
+        class CodeReviewSubscriber < Legion::Extensions::Actors::Subscription
           QUEUE = defined?(Transport::Queues::CodeReview) ? Transport::Queues::CodeReview : nil
 
           def action(payload)

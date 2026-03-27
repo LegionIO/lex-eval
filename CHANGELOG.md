@@ -1,6 +1,22 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.3] - 2026-03-27
+
+### Fixed
+- Exchange `Codegen`: changed from module with `extend` to class inheriting `Legion::Transport::Exchange` (Exchange is a Class, not a Module)
+- Queue `CodeReview`: changed from module with `include` to class inheriting `Legion::Transport::Queue` for consistency
+
+## [0.3.2] - 2026-03-27
+
+### Fixed
+- Exchange module: `include` -> `extend` for `Legion::Transport::Exchange` (class, not module)
+- Actor: `CodeReviewSubscriber` changed from module to class inheriting `Actors::Subscription`
+- Actor file guarded with `return unless defined?` for standalone spec compatibility
+
+## [0.3.1] - 2026-03-26
+
+### Changed
+- set remote_invocable? false for local dispatch
 
 ## [0.3.0] - 2026-03-26
 
