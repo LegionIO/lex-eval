@@ -1,6 +1,11 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.2] - 2026-03-27
+
+### Fixed
+- Exchange module: `include` -> `extend` for `Legion::Transport::Exchange` (class, not module)
+- Actor: `CodeReviewSubscriber` changed from module to class inheriting `Actors::Subscription`
+- Actor file guarded with `return unless defined?` for standalone spec compatibility
 
 ## [0.3.1] - 2026-03-26
 

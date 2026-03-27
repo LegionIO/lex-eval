@@ -6,7 +6,7 @@ module Legion
       module Transport
         module Exchanges
           module Codegen
-            include Legion::Transport::Exchange
+            extend Legion::Transport::Exchange
 
             EXCHANGE_NAME = 'codegen'
             EXCHANGE_OPTIONS = { type: 'topic', durable: true }.freeze
