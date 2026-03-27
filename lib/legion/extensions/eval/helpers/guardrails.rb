@@ -58,7 +58,7 @@ module Legion
                     response: { success: false, blocked: true, reason: rule[:name],
                                 content: rule[:fallback_response] || 'Request blocked by guardrail.' } }
                 when :warn
-                  log&.warn("Guardrail #{rule[:name]} triggered")
+                  log.warn("Guardrail #{rule[:name]} triggered")
                   nil
                 when :fallback
                   { action: :block, rule: rule[:name],
@@ -78,9 +78,11 @@ module Legion
             end
 
             def log
-              return unless defined?(Legion::Logging)
+              return Legion::Logging if defined?(Legion::Logging)
 
-              Legion::Logging
+              @log ||= Object.new.tap do |nl|
+                %i[debug info warn error fatal].each { |m| nl.define_singleton_method(m) { |*| nil } }
+              end
             end
           end
         end

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.7] - 2026-03-27
+
+### Fixed
+- Replace `log&.warn(...)` with `log.warn(...)` in `CodeReviewSubscriber` and `Helpers::Guardrails` so the CI `\blog\.` rescue-logging check matches
+- Fix `log` helper in both files to always return a non-nil object (returns `Legion::Logging` when available, a no-op null logger otherwise)
+
 ## [0.3.6] - 2026-03-27
 
 ### Fixed
