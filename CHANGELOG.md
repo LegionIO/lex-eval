@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.9] - 2026-03-28
+
+### Added
+- `CodeReview#run_quality_gate`: Stage 5 optional QualityGate pass after LLM review, powered by `Legion::Extensions::Factory::Helpers::QualityGate` when lex-factory is loaded
+- `CodeReview#quality_gate_available?`: soft availability check; skips stage gracefully when lex-factory is absent
+- `CodeReview#quality_gate_dimensions`: extracts completeness/correctness/quality/security dimension scores from prior stages for QualityGate input
+- `CodeReview#stage_passed?`: shared predicate used by both `stage_scores` and `quality_gate_dimensions`
+- QualityGate aggregate score now included in `calculate_confidence` via `stage_scores`
+- Issue message appended to result when QualityGate aggregate falls below threshold
+- Settings key `codegen.self_generate.validation.quality_gate.enabled` (default true when lex-factory available) and `quality_gate.threshold` to forward a custom threshold
+- 6 new specs covering QualityGate integration: stage present, disabled via settings, fail message, aggregate in confidence, scores hash shape, graceful skip when lex-factory absent
+
 ## [0.3.8] - 2026-03-27
 
 ### Fixed

@@ -90,5 +90,101 @@ RSpec.describe Legion::Extensions::Eval::Runners::CodeReview do
       expect(result[:confidence]).to be_a(Float)
       expect(result[:confidence]).to be > 0.0
     end
+
+    context 'when lex-factory QualityGate is available' do
+      before do
+        stub_const('Legion::Extensions::Factory::Helpers::QualityGate', Module.new do
+          def self.score(completeness:, correctness:, quality:, security:, **opts)
+            threshold = opts[:threshold] || 0.8
+            aggregate = (completeness * 0.35) + (correctness * 0.35) + (quality * 0.20) + (security * 0.10)
+            { pass: aggregate >= threshold, aggregate: aggregate.round(4), threshold: threshold,
+              scores: { completeness: completeness, correctness: correctness, quality: quality, security: security } }
+          end
+        end)
+      end
+
+      it 'runs the QualityGate stage and includes it in the result' do
+        allow(Legion::Settings).to receive(:dig).and_return(nil)
+        allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation).and_return({
+                                                                                                          syntax_check: true,
+                                                                                                          run_specs:    false,
+                                                                                                          llm_review:   false
+                                                                                                        })
+
+        result = described_class.review_generated(code: valid_code, spec_code: '', context: {})
+        expect(result[:stages]).to have_key(:quality_gate)
+        expect(result[:stages][:quality_gate]).to include(:pass, :aggregate, :threshold, :scores)
+      end
+
+      it 'includes the quality_gate aggregate in confidence calculation' do
+        allow(Legion::Settings).to receive(:dig).and_return(nil)
+        allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation).and_return({
+                                                                                                          syntax_check: true,
+                                                                                                          run_specs:    false,
+                                                                                                          llm_review:   false
+                                                                                                        })
+
+        result = described_class.review_generated(code: valid_code, spec_code: '', context: {})
+        expect(result[:confidence]).to be_a(Float)
+        expect(result[:confidence]).to be > 0.0
+      end
+
+      it 'adds an issue message when QualityGate fails' do
+        allow(Legion::Settings).to receive(:dig).and_return(nil)
+        allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation).and_return({
+                                                                                                          syntax_check: true,
+                                                                                                          run_specs:    false,
+                                                                                                          llm_review:   false,
+                                                                                                          quality_gate: { threshold: 1.1 }
+                                                                                                        })
+
+        result = described_class.review_generated(code: valid_code, spec_code: '', context: {})
+        expect(result[:issues].any? { |i| i.include?('quality gate failed') }).to be true
+      end
+
+      it 'skips QualityGate when disabled in settings' do
+        allow(Legion::Settings).to receive(:dig).and_return(nil)
+        allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation).and_return({
+                                                                                                          syntax_check: true,
+                                                                                                          run_specs:    false,
+                                                                                                          llm_review:   false,
+                                                                                                          quality_gate: { enabled: false }
+                                                                                                        })
+
+        result = described_class.review_generated(code: valid_code, spec_code: '', context: {})
+        expect(result[:stages]).not_to have_key(:quality_gate)
+      end
+
+      it 'passes QualityGate stage info through to the result stages hash' do
+        allow(Legion::Settings).to receive(:dig).and_return(nil)
+        allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation).and_return({
+                                                                                                          syntax_check: true,
+                                                                                                          run_specs:    false,
+                                                                                                          llm_review:   false
+                                                                                                        })
+
+        result = described_class.review_generated(code: valid_code, spec_code: '', context: {})
+        qg = result[:stages][:quality_gate]
+        expect(qg[:scores]).to include(:completeness, :correctness, :quality, :security)
+      end
+    end
+
+    context 'when lex-factory QualityGate is not available' do
+      it 'skips the QualityGate stage gracefully' do
+        allow(Legion::Settings).to receive(:dig).and_return(nil)
+        allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation).and_return({
+                                                                                                          syntax_check: true,
+                                                                                                          run_specs:    false,
+                                                                                                          llm_review:   false
+                                                                                                        })
+
+        # Ensure QualityGate constant is absent
+        hide_const('Legion::Extensions::Factory::Helpers::QualityGate') if defined?(Legion::Extensions::Factory::Helpers::QualityGate)
+
+        result = described_class.review_generated(code: valid_code, spec_code: '', context: {})
+        expect(result[:passed]).to be true
+        expect(result[:stages]).not_to have_key(:quality_gate)
+      end
+    end
   end
 end

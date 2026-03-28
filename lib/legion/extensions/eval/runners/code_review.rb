@@ -12,7 +12,7 @@ module Legion
 
           SPEC_TIMEOUT = 30
 
-          def review_generated(code:, spec_code:, context:) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+          def review_generated(code:, spec_code:, context:) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
             settings = validation_settings
             stages = {}
             issues = []
@@ -46,6 +46,15 @@ module Legion
             if settings[:llm_review] && llm_available?
               stages[:llm_review] = llm_review(code, context)
               issues.concat(stages[:llm_review][:issues] || [])
+            end
+
+            # Stage 5: QualityGate (optional, requires lex-factory)
+            qg_settings = settings[:quality_gate] || {}
+            if quality_gate_available? && qg_settings[:enabled] != false
+              stages[:quality_gate] = run_quality_gate(stages, qg_settings)
+              unless stages[:quality_gate][:pass]
+                issues << "quality gate failed: aggregate #{stages[:quality_gate][:aggregate]} below threshold #{stages[:quality_gate][:threshold]}"
+              end
             end
 
             confidence = calculate_confidence(stages)
@@ -129,6 +138,37 @@ module Legion
             defined?(Legion::LLM) && Legion::LLM.respond_to?(:chat)
           end
 
+          def quality_gate_available?
+            defined?(Legion::Extensions::Factory::Helpers::QualityGate)
+          end
+
+          def run_quality_gate(stages, qg_settings)
+            kwargs = quality_gate_dimensions(stages)
+            kwargs[:threshold] = qg_settings[:threshold] if qg_settings[:threshold]
+            Legion::Extensions::Factory::Helpers::QualityGate.score(**kwargs)
+          rescue StandardError => e
+            { pass: true, aggregate: 1.0, threshold: 0.8, scores: {}, error: e.message }
+          end
+
+          def quality_gate_dimensions(stages)
+            {
+              completeness: stage_passed?(stages[:syntax]) ? 1.0 : 0.0,
+              correctness:  qg_correctness(stages[:specs]),
+              quality:      stages.dig(:llm_review, :confidence) || 1.0,
+              security:     stage_passed?(stages[:security]) ? 1.0 : 0.0
+            }
+          end
+
+          def qg_correctness(specs_stage)
+            return 1.0 unless specs_stage
+
+            stage_passed?(specs_stage) ? 1.0 : 0.3
+          end
+
+          def stage_passed?(stage)
+            stage&.dig(:passed) == true
+          end
+
           def calculate_confidence(stages)
             scores = stage_scores(stages)
             return 0.5 if scores.empty?
@@ -136,12 +176,13 @@ module Legion
             scores.sum / scores.size
           end
 
-          def stage_scores(stages) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+          def stage_scores(stages) # rubocop:disable Metrics/PerceivedComplexity
             scores = []
-            scores << (stages[:syntax]&.dig(:passed) ? 1.0 : 0.0) if stages[:syntax]
-            scores << (stages[:security]&.dig(:passed) ? 1.0 : 0.0) if stages[:security]
-            scores << (stages[:specs]&.dig(:passed) ? 1.0 : 0.3) if stages[:specs]
+            scores << (stage_passed?(stages[:syntax]) ? 1.0 : 0.0) if stages[:syntax]
+            scores << (stage_passed?(stages[:security]) ? 1.0 : 0.0) if stages[:security]
+            scores << (stage_passed?(stages[:specs]) ? 1.0 : 0.3) if stages[:specs]
             scores << (stages.dig(:llm_review, :confidence) || 0.5) if stages[:llm_review]
+            scores << stages.dig(:quality_gate, :aggregate) if stages[:quality_gate]
             scores
           end
 
