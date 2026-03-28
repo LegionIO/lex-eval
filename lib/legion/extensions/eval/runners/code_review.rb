@@ -9,6 +9,7 @@ module Legion
       module Runners
         module CodeReview
           extend self
+          include Legion::Logging::Helper
 
           SPEC_TIMEOUT = 30
 
@@ -70,7 +71,7 @@ module Legion
 
             Legion::Settings.dig(:codegen, :self_generate, :validation) || {}
           rescue StandardError => e
-            Legion::Logging.warn("validation_settings failed: #{e.message}") if defined?(Legion::Logging)
+            log.warn("validation_settings failed: #{e.message}")
             {}
           end
 
@@ -79,6 +80,7 @@ module Legion
             begin
               RubyVM::InstructionSequence.compile(code)
             rescue SyntaxError => e
+              log.debug("syntax check failed: #{e.message}")
               errors << "code: #{e.message}"
             end
 
@@ -86,6 +88,7 @@ module Legion
               begin
                 RubyVM::InstructionSequence.compile(spec_code)
               rescue SyntaxError => e
+                log.debug("spec syntax check failed: #{e.message}")
                 errors << "spec: #{e.message}"
               end
             end
@@ -114,6 +117,7 @@ module Legion
               { passed: status.success?, output: stdout, errors: stderr, exit_code: status.exitstatus }
             end
           rescue StandardError => e
+            log.warn("spec execution failed: #{e.message}")
             { passed: false, output: '', errors: e.message, exit_code: -1 }
           end
 
@@ -132,6 +136,7 @@ module Legion
               confidence: result[:confidence] || 0.5
             }
           rescue StandardError => e
+            log.warn("llm review failed: #{e.message}")
             { passed: true, issues: ["llm review failed: #{e.message}"], confidence: 0.5 }
           end
 
@@ -148,6 +153,7 @@ module Legion
             kwargs[:threshold] = qg_settings[:threshold] if qg_settings[:threshold]
             Legion::Extensions::Factory::Helpers::QualityGate.score(**kwargs)
           rescue StandardError => e
+            log.warn("quality gate failed: #{e.message}")
             { pass: true, aggregate: 1.0, threshold: 0.8, scores: {}, error: e.message }
           end
 
