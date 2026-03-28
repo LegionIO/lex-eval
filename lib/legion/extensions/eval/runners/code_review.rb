@@ -69,7 +69,8 @@ module Legion
             return {} unless defined?(Legion::Settings)
 
             Legion::Settings.dig(:codegen, :self_generate, :validation) || {}
-          rescue StandardError
+          rescue StandardError => e
+            Legion::Logging.warn("validation_settings failed: #{e.message}") if defined?(Legion::Logging)
             {}
           end
 
