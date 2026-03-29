@@ -84,7 +84,8 @@ module Legion
             return 1 unless defined?(Legion::Settings)
 
             Legion::Settings.dig(:codegen, :self_generate, :validation, :review_k) || 1
-          rescue StandardError
+          rescue StandardError => e
+            log.warn(e.message)
             1
           end
 
