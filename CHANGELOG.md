@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.10] - 2026-03-28
+
+### Fixed
+- `CodeReview#llm_review`: pass `input: context` and `review_prompt:` to `AgenticReview.review_output` instead of the unknown `criteria:` and `context:` kwargs which were silently absorbed by `**`
+
 ## [0.3.9] - 2026-03-28
 
 ### Added

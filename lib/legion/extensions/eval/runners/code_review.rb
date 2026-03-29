@@ -125,9 +125,9 @@ module Legion
             return { passed: true, issues: [], confidence: 0.5 } unless defined?(Runners::AgenticReview)
 
             result = Runners::AgenticReview.review_output(
-              output:   code,
-              criteria: 'Review this generated Ruby code for correctness, safety, and Legion conventions.',
-              context:  context
+              input:         context,
+              output:        code,
+              review_prompt: 'Review this generated Ruby code for correctness, safety, and Legion conventions.'
             )
 
             {
