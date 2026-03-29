@@ -169,6 +169,31 @@ RSpec.describe Legion::Extensions::Eval::Runners::CodeReview do
       end
     end
 
+    describe 'adversarial LLM review (K > 1)' do
+      let(:approve_review) { { passed: true, issues: [], confidence: 0.8 } }
+
+      before do
+        allow(described_class).to receive(:llm_available?).and_return(true)
+        allow(described_class).to receive(:validation_settings).and_return({ llm_review: true, syntax_check: false })
+        allow(described_class).to receive(:llm_review).and_return(approve_review)
+      end
+
+      context 'when review_k is passed' do
+        it 'runs LLM review K times' do
+          result = described_class.review_generated(code: 'puts 1', spec_code: '', context: {}, review_k: 3)
+          expect(result[:stages][:llm_review][:k]).to eq(3)
+          expect(result[:stages][:llm_review][:approvals]).to eq(3)
+        end
+      end
+
+      context 'when review_k defaults to 1' do
+        it 'runs single LLM review' do
+          result = described_class.review_generated(code: 'puts 1', spec_code: '', context: {})
+          expect(result[:stages][:llm_review]).not_to have_key(:k)
+        end
+      end
+    end
+
     context 'when lex-factory QualityGate is not available' do
       it 'skips the QualityGate stage gracefully' do
         allow(Legion::Settings).to receive(:dig).and_return(nil)

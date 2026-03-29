@@ -2,6 +2,9 @@
 
 ## [0.3.10] - 2026-03-28
 
+### Added
+- Added K-factor adversarial LLM review (review_k: kwarg, default 1)
+
 ### Fixed
 - `CodeReview#llm_review`: pass `input: context` and `review_prompt:` to `AgenticReview.review_output` instead of the unknown `criteria:` and `context:` kwargs which were silently absorbed by `**`
 

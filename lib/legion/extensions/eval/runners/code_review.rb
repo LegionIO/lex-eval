@@ -13,7 +13,7 @@ module Legion
 
           SPEC_TIMEOUT = 30
 
-          def review_generated(code:, spec_code:, context:) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
+          def review_generated(code:, spec_code:, context:, review_k: nil) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
             settings = validation_settings
             stages = {}
             issues = []
@@ -45,7 +45,12 @@ module Legion
 
             # Stage 4: LLM review (optional)
             if settings[:llm_review] && llm_available?
-              stages[:llm_review] = llm_review(code, context)
+              k = review_k || default_review_k
+              stages[:llm_review] = if k > 1
+                                      adversarial_llm_review(code, context, count: k)
+                                    else
+                                      llm_review(code, context)
+                                    end
               issues.concat(stages[:llm_review][:issues] || [])
             end
 
@@ -73,6 +78,38 @@ module Legion
           rescue StandardError => e
             log.warn("validation_settings failed: #{e.message}")
             {}
+          end
+
+          def default_review_k
+            return 1 unless defined?(Legion::Settings)
+
+            Legion::Settings.dig(:codegen, :self_generate, :validation, :review_k) || 1
+          rescue StandardError
+            1
+          end
+
+          def adversarial_llm_review(code, context, count:)
+            reviews = Array.new(count) { llm_review(code, context) }
+
+            approvals = reviews.count { |r| r[:confidence] >= 0.5 }
+            rejections = count - approvals
+            all_issues = reviews.flat_map { |r| r[:issues] || [] }.uniq
+
+            avg_confidence = reviews.sum { |r| r[:confidence] || 0.0 } / count
+            consensus = approvals > rejections ? :approve : :revise
+
+            {
+              passed:     consensus == :approve,
+              issues:     all_issues,
+              confidence: avg_confidence,
+              k:          count,
+              approvals:  approvals,
+              rejections: rejections,
+              reviews:    reviews
+            }
+          rescue StandardError => e
+            log.warn("adversarial review failed: #{e.message}")
+            llm_review(code, context)
           end
 
           def check_syntax(code, spec_code)
