@@ -13,7 +13,7 @@ module Legion
 
           SPEC_TIMEOUT = 30
 
-          def review_generated(code:, spec_code:, context:, review_k: nil) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
+          def review_generated(code:, spec_code:, context:, review_k: nil, review_models: nil) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
             settings = validation_settings
             stages = {}
             issues = []
@@ -46,10 +46,11 @@ module Legion
             # Stage 4: LLM review (optional)
             if settings[:llm_review] && llm_available?
               k = review_k || default_review_k
+              models = review_models || default_review_models
               stages[:llm_review] = if k > 1
-                                      adversarial_llm_review(code, context, count: k)
+                                      adversarial_llm_review(code, context, count: k, models: models)
                                     else
-                                      llm_review(code, context)
+                                      llm_review(code, context, model_spec: models&.first)
                                     end
               issues.concat(stages[:llm_review][:issues] || [])
             end
@@ -89,18 +90,55 @@ module Legion
             1
           end
 
-          def adversarial_llm_review(code, context, count:)
-            reviews = Array.new(count) { llm_review(code, context) }
+          def default_review_models
+            return [] unless defined?(Legion::Settings)
+
+            Legion::Settings.dig(:codegen, :self_generate, :validation, :review_models) || []
+          rescue StandardError => e
+            log.warn(e.message)
+            []
+          end
+
+          def provider_available?(provider_sym)
+            return false unless defined?(Legion::Settings)
+
+            Legion::Settings.dig(:llm, :providers, provider_sym, :enabled) == true
+          rescue StandardError => e
+            log.warn(e.message)
+            false
+          end
+
+          def build_model_assignments(count, models) # rubocop:disable Metrics/PerceivedComplexity
+            return Array.new(count) { nil } if models.nil? || models.empty?
+
+            available = models.select do |spec|
+              provider_sym = spec[:provider]&.to_sym
+              if provider_sym && !provider_available?(provider_sym)
+                log.warn("review provider #{provider_sym} not available, skipping")
+                false
+              else
+                true
+              end
+            end
+
+            return Array.new(count) { nil } if available.empty?
+
+            Array.new(count) { |i| available[i % available.size] }
+          end
+
+          def adversarial_llm_review(code, context, count:, models: [])
+            assignments = build_model_assignments(count, models)
+
+            reviews = assignments.map { |spec| llm_review(code, context, model_spec: spec) }
 
             approvals = reviews.count { |r| r[:confidence] >= 0.5 }
             rejections = count - approvals
             all_issues = reviews.flat_map { |r| r[:issues] || [] }.uniq
 
-            avg_confidence = reviews.sum { |r| r[:confidence] || 0.0 } / count
-            consensus = approvals > rejections ? :approve : :revise
+            avg_confidence = reviews.sum { |r| r[:confidence] || 0.0 } / reviews.size
 
             {
-              passed:     consensus == :approve,
+              passed:     approvals > rejections,
               issues:     all_issues,
               confidence: avg_confidence,
               k:          count,
@@ -159,19 +197,28 @@ module Legion
             { passed: false, output: '', errors: e.message, exit_code: -1 }
           end
 
-          def llm_review(code, context)
+          def llm_review(code, context, model_spec: nil) # rubocop:disable Metrics/PerceivedComplexity
             return { passed: true, issues: [], confidence: 0.5 } unless defined?(Runners::AgenticReview)
+
+            extra_kwargs = {}
+            if model_spec
+              extra_kwargs[:model] = model_spec[:model] if model_spec[:model]
+              extra_kwargs[:provider] = model_spec[:provider] if model_spec[:provider]
+            end
 
             result = Runners::AgenticReview.review_output(
               input:         context,
               output:        code,
-              review_prompt: 'Review this generated Ruby code for correctness, safety, and Legion conventions.'
+              review_prompt: 'Review this generated Ruby code for correctness, safety, and Legion conventions.',
+              **extra_kwargs
             )
 
             {
               passed:     result[:reviewed] != false,
               issues:     result[:issues] || [],
-              confidence: result[:confidence] || 0.5
+              confidence: result[:confidence] || 0.5,
+              provider:   model_spec&.dig(:provider),
+              model:      model_spec&.dig(:model)
             }
           rescue StandardError => e
             log.warn("llm review failed: #{e.message}")

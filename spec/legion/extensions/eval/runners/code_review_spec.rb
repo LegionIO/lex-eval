@@ -194,6 +194,76 @@ RSpec.describe Legion::Extensions::Eval::Runners::CodeReview do
       end
     end
 
+    describe 'multi-provider adversarial review' do
+      before do
+        allow(described_class).to receive(:llm_available?).and_return(true)
+        allow(described_class).to receive(:validation_settings).and_return({ llm_review: true, syntax_check: false })
+      end
+
+      context 'with review_models provided' do
+        let(:models) do
+          [
+            { provider: :bedrock, model: 'claude-sonnet' },
+            { provider: :openai, model: 'gpt-4o' }
+          ]
+        end
+
+        before do
+          allow(described_class).to receive(:provider_available?).and_return(true)
+          allow(described_class).to receive(:llm_review).and_return(
+            { confidence: 0.8, issues: [], passed: true }
+          )
+        end
+
+        it 'cycles models across K reviews' do
+          result = described_class.review_generated(
+            code: 'puts 1', spec_code: '', context: {},
+            review_k: 3, review_models: models
+          )
+          expect(result[:stages][:llm_review][:k]).to eq(3)
+        end
+      end
+
+      context 'when a provider is unavailable' do
+        let(:models) do
+          [
+            { provider: :bedrock, model: 'claude-sonnet' },
+            { provider: :openai, model: 'gpt-4o' }
+          ]
+        end
+
+        before do
+          allow(described_class).to receive(:provider_available?).with(:bedrock).and_return(true)
+          allow(described_class).to receive(:provider_available?).with(:openai).and_return(false)
+          allow(described_class).to receive(:llm_review).and_return(
+            { confidence: 0.8, issues: [], passed: true }
+          )
+        end
+
+        it 'skips unavailable providers and backfills' do
+          result = described_class.review_generated(
+            code: 'puts 1', spec_code: '', context: {},
+            review_k: 3, review_models: models
+          )
+          # Only bedrock available, so all 3 slots use bedrock
+          expect(result[:stages][:llm_review][:k]).to eq(3)
+        end
+      end
+
+      context 'with empty review_models' do
+        it 'falls back to default provider for all K' do
+          allow(described_class).to receive(:llm_review).and_return(
+            { confidence: 0.8, issues: [], passed: true }
+          )
+          result = described_class.review_generated(
+            code: 'puts 1', spec_code: '', context: {},
+            review_k: 2, review_models: []
+          )
+          expect(result[:stages][:llm_review][:k]).to eq(2)
+        end
+      end
+    end
+
     context 'when lex-factory QualityGate is not available' do
       it 'skips the QualityGate stage gracefully' do
         allow(Legion::Settings).to receive(:dig).and_return(nil)
