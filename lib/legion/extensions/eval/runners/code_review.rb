@@ -112,6 +112,8 @@ module Legion
             return Array.new(count) { nil } if models.nil? || models.empty?
 
             available = models.select do |spec|
+              next false unless spec.is_a?(Hash)
+
               provider_sym = spec[:provider]&.to_sym
               if provider_sym && !provider_available?(provider_sym)
                 log.warn("review provider #{provider_sym} not available, skipping")
@@ -126,7 +128,7 @@ module Legion
             Array.new(count) { |i| available[i % available.size] }
           end
 
-          def adversarial_llm_review(code, context, count:, models: [])
+          def adversarial_llm_review(code, context, count:, models: []) # rubocop:disable Metrics/PerceivedComplexity
             assignments = build_model_assignments(count, models)
 
             reviews = assignments.map { |spec| llm_review(code, context, model_spec: spec) }
@@ -148,7 +150,9 @@ module Legion
             }
           rescue StandardError => e
             log.warn("adversarial review failed: #{e.message}")
-            llm_review(code, context)
+            fallback = llm_review(code, context)
+            fallback.merge(k: count, approvals: (fallback[:passed] ? 1 : 0),
+                           rejections: (fallback[:passed] ? 0 : 1), reviews: [fallback])
           end
 
           def check_syntax(code, spec_code)

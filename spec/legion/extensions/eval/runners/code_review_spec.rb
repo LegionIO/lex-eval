@@ -273,6 +273,33 @@ RSpec.describe Legion::Extensions::Eval::Runners::CodeReview do
         end
       end
 
+      context 'when review_models is nil (settings fallback)' do
+        it 'reads review_models from settings when not passed' do
+          allow(Legion::Settings).to receive(:dig).and_return(nil)
+          allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation).and_return(
+            { llm_review: true, syntax_check: false }
+          )
+          allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation,
+                                                        :review_k).and_return(2)
+          allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation,
+                                                        :review_models).and_return(
+                                                          [{ provider: :bedrock, model: 'claude-sonnet' }]
+                                                        )
+          allow(described_class).to receive(:provider_available?).with(:bedrock).and_return(true)
+
+          specs_received = []
+          allow(described_class).to receive(:llm_review) do |_code, _ctx, model_spec:|
+            specs_received << model_spec
+            { confidence: 0.8, issues: [], passed: true }
+          end
+
+          described_class.review_generated(code: 'puts 1', spec_code: '', context: {})
+
+          expect(specs_received).not_to be_empty
+          expect(specs_received.map { |s| s&.dig(:provider) }).to all(eq(:bedrock))
+        end
+      end
+
       context 'with empty review_models' do
         it 'falls back to default provider for all K' do
           allow(described_class).to receive(:llm_review).and_return(
