@@ -194,6 +194,168 @@ RSpec.describe Legion::Extensions::Eval::Runners::CodeReview do
       end
     end
 
+    describe 'multi-provider adversarial review' do
+      before do
+        allow(described_class).to receive(:llm_available?).and_return(true)
+        allow(described_class).to receive(:validation_settings).and_return({ llm_review: true, syntax_check: false })
+      end
+
+      context 'with review_models provided' do
+        let(:models) do
+          [
+            { provider: :bedrock, model: 'claude-sonnet' },
+            { provider: :openai, model: 'gpt-4o' }
+          ]
+        end
+
+        before do
+          allow(described_class).to receive(:provider_available?).and_return(true)
+          allow(described_class).to receive(:llm_review).and_return(
+            { confidence: 0.8, issues: [], passed: true }
+          )
+        end
+
+        it 'cycles models across K reviews' do
+          result = described_class.review_generated(
+            code: 'puts 1', spec_code: '', context: {},
+            review_k: 3, review_models: models
+          )
+          expect(result[:stages][:llm_review][:k]).to eq(3)
+        end
+
+        it 'passes different model specs to each review' do
+          specs_received = []
+          allow(described_class).to receive(:llm_review) do |_code, _ctx, model_spec:|
+            specs_received << model_spec
+            { confidence: 0.8, issues: [], passed: true }
+          end
+
+          described_class.review_generated(
+            code: 'puts 1', spec_code: '', context: {},
+            review_k: 3, review_models: models
+          )
+          # 2 models cycling across 3 slots: [bedrock, openai, bedrock]
+          expect(specs_received.map { |s| s&.dig(:provider) }).to eq(%i[bedrock openai bedrock])
+        end
+      end
+
+      context 'when a provider is unavailable' do
+        let(:models) do
+          [
+            { provider: :bedrock, model: 'claude-sonnet' },
+            { provider: :openai, model: 'gpt-4o' }
+          ]
+        end
+
+        before do
+          allow(described_class).to receive(:provider_available?).with(:bedrock).and_return(true)
+          allow(described_class).to receive(:provider_available?).with(:openai).and_return(false)
+          allow(described_class).to receive(:llm_review).and_return(
+            { confidence: 0.8, issues: [], passed: true }
+          )
+        end
+
+        it 'skips unavailable providers and cycles remaining available ones' do
+          specs_received = []
+          allow(described_class).to receive(:llm_review) do |_code, _ctx, model_spec:|
+            specs_received << model_spec
+            { confidence: 0.8, issues: [], passed: true }
+          end
+
+          result = described_class.review_generated(
+            code: 'puts 1', spec_code: '', context: {},
+            review_k: 3, review_models: models
+          )
+          # openai skipped — all 3 slots use bedrock
+          expect(result[:stages][:llm_review][:k]).to eq(3)
+          expect(specs_received.map { |s| s&.dig(:provider) }).to all(eq(:bedrock))
+          expect(specs_received.map { |s| s&.dig(:provider) }).not_to include(:openai)
+        end
+      end
+
+      context 'when review_models is nil (settings fallback)' do
+        it 'reads review_models from settings when not passed' do
+          allow(Legion::Settings).to receive(:dig).and_return(nil)
+          allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation).and_return(
+            { llm_review: true, syntax_check: false }
+          )
+          allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation,
+                                                        :review_k).and_return(2)
+          allow(Legion::Settings).to receive(:dig).with(:codegen, :self_generate, :validation,
+                                                        :review_models).and_return(
+                                                          [{ provider: :bedrock, model: 'claude-sonnet' }]
+                                                        )
+          allow(described_class).to receive(:provider_available?).with(:bedrock).and_return(true)
+
+          specs_received = []
+          allow(described_class).to receive(:llm_review) do |_code, _ctx, model_spec:|
+            specs_received << model_spec
+            { confidence: 0.8, issues: [], passed: true }
+          end
+
+          described_class.review_generated(code: 'puts 1', spec_code: '', context: {})
+
+          expect(specs_received).not_to be_empty
+          expect(specs_received.map { |s| s&.dig(:provider) }).to all(eq(:bedrock))
+        end
+      end
+
+      context 'with empty review_models' do
+        it 'falls back to default provider for all K' do
+          allow(described_class).to receive(:llm_review).and_return(
+            { confidence: 0.8, issues: [], passed: true }
+          )
+          result = described_class.review_generated(
+            code: 'puts 1', spec_code: '', context: {},
+            review_k: 2, review_models: []
+          )
+          expect(result[:stages][:llm_review][:k]).to eq(2)
+        end
+      end
+
+      context 'when review_k is 1 with review_models' do
+        let(:models) do
+          [
+            { provider: :azure, model: 'gpt-4o' },
+            { provider: :bedrock, model: 'claude-sonnet' }
+          ]
+        end
+
+        it 'uses the first available model when the first entry is disabled' do
+          allow(described_class).to receive(:provider_available?).with(:azure).and_return(false)
+          allow(described_class).to receive(:provider_available?).with(:bedrock).and_return(true)
+
+          spec_received = nil
+          allow(described_class).to receive(:llm_review) do |_code, _ctx, model_spec:|
+            spec_received = model_spec
+            { confidence: 0.8, issues: [], passed: true }
+          end
+
+          described_class.review_generated(
+            code: 'puts 1', spec_code: '', context: {},
+            review_k: 1, review_models: models
+          )
+          expect(spec_received&.dig(:provider)).to eq(:bedrock)
+        end
+
+        it 'falls back to nil model_spec when all providers are unavailable' do
+          allow(described_class).to receive(:provider_available?).and_return(false)
+
+          spec_received = :unset
+          allow(described_class).to receive(:llm_review) do |_code, _ctx, model_spec:|
+            spec_received = model_spec
+            { confidence: 0.8, issues: [], passed: true }
+          end
+
+          described_class.review_generated(
+            code: 'puts 1', spec_code: '', context: {},
+            review_k: 1, review_models: models
+          )
+          expect(spec_received).to be_nil
+        end
+      end
+    end
+
     context 'when lex-factory QualityGate is not available' do
       it 'skips the QualityGate stage gracefully' do
         allow(Legion::Settings).to receive(:dig).and_return(nil)
