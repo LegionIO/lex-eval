@@ -34,6 +34,7 @@ module Legion
             llm_kwargs[:provider] = provider if provider
             Legion::LLM.structured(**llm_kwargs)
           rescue StandardError => e
+            log.warn(e.message) if respond_to?(:log, true)
             { confidence: 0.0, recommendation: 'reject',
               issues: [], explanation: "review error: #{e.message}" }
           end
@@ -72,6 +73,7 @@ module Legion
               review_a: review_a,
               review_b: review_b }
           rescue StandardError => e
+            log.warn(e.message) if respond_to?(:log, true)
             { reviewed: false, reason: "experiment error: #{e.message}" }
           end
 
