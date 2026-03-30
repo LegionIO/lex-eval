@@ -1,9 +1,18 @@
 # Changelog
 
-## [0.3.10] - 2026-03-28
+## [0.3.11] - 2026-03-29
 
 ### Added
-- Added K-factor adversarial LLM review (review_k: kwarg, default 1)
+- Multi-provider model diversity for adversarial K-factor LLM review (`review_models:` kwarg)
+- `build_model_assignments` cycles available providers, skips unavailable with log warning, backfills with default
+- `provider_available?` checks `Settings[:llm][:providers][sym][:enabled]`
+- `llm_review` accepts `model_spec:` and forwards `model:`/`provider:` to `AgenticReview.review_output`
+- Settings fallback: `codegen.self_generate.validation.review_models` (default `[]`)
+
+## [0.3.10] - 2026-03-29
+
+### Added
+- K-factor adversarial LLM review (`review_k:` kwarg, default 1)
 
 ### Fixed
 - `CodeReview#llm_review`: pass `input: context` and `review_prompt:` to `AgenticReview.review_output` instead of the unknown `criteria:` and `context:` kwargs which were silently absorbed by `**`
