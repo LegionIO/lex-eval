@@ -5,6 +5,8 @@ module Legion
     module Eval
       module Runners
         module Evaluation
+          extend self # rubocop:disable Style/ModuleFunction
+
           def run_evaluation(evaluator_name:, evaluator_config: {}, inputs: [], **)
             evaluator = build_evaluator(evaluator_name, evaluator_config)
             results = inputs.map.with_index do |row, idx|

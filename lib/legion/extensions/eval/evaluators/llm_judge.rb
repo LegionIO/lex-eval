@@ -37,24 +37,24 @@ module Legion
           def evaluate_impl(input:, output:, expected:)
             prompt = render_template(input: input, output: output, expected: expected)
             evaluate_structured(prompt)
-          rescue StandardError
+          rescue StandardError => _e
             evaluate_regex_fallback(prompt)
           end
 
           def evaluate_structured(prompt)
             return evaluate_regex_fallback(prompt) unless structured_available?
 
-            result = Legion::LLM.structured(message: prompt, schema: JUDGE_SCHEMA,
+            result = Legion::LLM.structured(message: prompt, schema: JUDGE_SCHEMA, # rubocop:disable Legion/HelperMigration/DirectLlm
                                             intent: { capability: :reasoning },
                                             caller: { extension: 'lex-eval', operation: 'judge' })
             { score: result[:score], passed: result[:passed],
               explanation: result[:explanation], evidence: result[:evidence] || [] }
-          rescue StandardError
+          rescue StandardError => _e
             evaluate_regex_fallback(prompt)
           end
 
           def evaluate_regex_fallback(prompt)
-            response = Legion::LLM.chat(message: prompt, intent: { capability: :reasoning },
+            response = Legion::LLM.chat(message: prompt, intent: { capability: :reasoning }, # rubocop:disable Legion/HelperMigration/DirectLlm
                                         caller: { extension: 'lex-eval', operation: 'judge' })
             score = extract_score(response.content)
             { score: score, explanation: response.content, passed: score >= threshold, evidence: [] }

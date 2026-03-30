@@ -13,7 +13,7 @@ module Legion
 
           SPEC_TIMEOUT = 30
 
-          def review_generated(code:, spec_code:, context: {}, review_k: nil, review_models: nil, **extra) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/ParameterLists, Metrics/PerceivedComplexity
+          def review_generated(code:, spec_code:, context: {}, review_k: nil, review_models: nil, **extra) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
             settings = validation_settings
             stages = {}
             issues = []
@@ -112,7 +112,7 @@ module Legion
             false
           end
 
-          def build_model_assignments(count, models) # rubocop:disable Metrics/PerceivedComplexity
+          def build_model_assignments(count, models)
             return Array.new(count) { nil } if models.nil? || models.empty?
 
             available = models.select do |spec|
@@ -132,7 +132,7 @@ module Legion
             Array.new(count) { |i| available[i % available.size] }
           end
 
-          def adversarial_llm_review(code, context, count:, models: []) # rubocop:disable Metrics/PerceivedComplexity
+          def adversarial_llm_review(code, context, count:, models: [])
             assignments = build_model_assignments(count, models)
 
             reviews = assignments.map { |spec| llm_review(code, context, model_spec: spec) }
@@ -205,7 +205,7 @@ module Legion
             { passed: false, output: '', errors: e.message, exit_code: -1 }
           end
 
-          def llm_review(code, context, model_spec: nil) # rubocop:disable Metrics/PerceivedComplexity
+          def llm_review(code, context, model_spec: nil)
             return { passed: true, issues: [], confidence: 0.5 } unless defined?(Runners::AgenticReview)
 
             extra_kwargs = {}
@@ -276,7 +276,7 @@ module Legion
             scores.sum / scores.size
           end
 
-          def stage_scores(stages) # rubocop:disable Metrics/PerceivedComplexity
+          def stage_scores(stages)
             scores = []
             scores << (stage_passed?(stages[:syntax]) ? 1.0 : 0.0) if stages[:syntax]
             scores << (stage_passed?(stages[:security]) ? 1.0 : 0.0) if stages[:security]
@@ -286,7 +286,7 @@ module Legion
             scores
           end
 
-          def build_result(passed:, verdict:, stages:, issues:, confidence:, code: nil, spec_code: nil, extra: {}) # rubocop:disable Metrics/ParameterLists
+          def build_result(passed:, verdict:, stages:, issues:, confidence:, code: nil, spec_code: nil, extra: {})
             result = { passed: passed, verdict: verdict, confidence: confidence, stages: stages, issues: issues }
             result[:code] = code
             result[:spec_code] = spec_code

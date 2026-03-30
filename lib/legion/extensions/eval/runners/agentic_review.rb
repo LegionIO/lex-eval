@@ -4,7 +4,7 @@ module Legion
   module Extensions
     module Eval
       module Runners
-        module AgenticReview
+        module AgenticReview # rubocop:disable Legion/Extension/RunnerIncludeHelpers
           REVIEW_SCHEMA = {
             type:       :object,
             properties: {
@@ -23,7 +23,7 @@ module Legion
             required:   %i[confidence recommendation explanation]
           }.freeze
 
-          def review_output(input:, output:, review_prompt: nil, model: nil, provider: nil, **) # rubocop:disable Metrics/ParameterLists
+          def review_output(input:, output:, review_prompt: nil, model: nil, provider: nil, **)
             prompt = build_review_message(review_prompt || default_review_prompt, input, output)
             llm_kwargs = {
               message: prompt, schema: REVIEW_SCHEMA,
@@ -32,14 +32,14 @@ module Legion
             }
             llm_kwargs[:model] = model if model
             llm_kwargs[:provider] = provider if provider
-            Legion::LLM.structured(**llm_kwargs)
+            Legion::LLM.structured(**llm_kwargs) # rubocop:disable Legion/HelperMigration/DirectLlm
           rescue StandardError => e
-            log.warn(e.message) if respond_to?(:log, true)
+            log.warn(e.message) if respond_to?(:log, true) # rubocop:disable Legion/HelperMigration/LoggingGuard
             { confidence: 0.0, recommendation: 'reject',
               issues: [], explanation: "review error: #{e.message}" }
           end
 
-          def review_with_escalation(input:, output:, review_prompt: nil, model: nil, provider: nil, **) # rubocop:disable Metrics/ParameterLists
+          def review_with_escalation(input:, output:, review_prompt: nil, model: nil, provider: nil, **)
             review = review_output(input: input, output: output, review_prompt: review_prompt,
                                    model: model, provider: provider)
             action, priority = determine_escalation(review[:confidence])
@@ -49,7 +49,7 @@ module Legion
             review.merge(action: action, escalated: true, priority: priority)
           end
 
-          def review_experiment(input:, output_a:, output_b:, review_prompt: nil, model: nil, provider: nil, **) # rubocop:disable Metrics/ParameterLists
+          def review_experiment(input:, output_a:, output_b:, review_prompt: nil, model: nil, provider: nil, **)
             review_a = review_output(input: input, output: output_a, review_prompt: review_prompt,
                                      model: model, provider: provider)
             review_b = review_output(input: input, output: output_b, review_prompt: review_prompt,
@@ -73,7 +73,7 @@ module Legion
               review_a: review_a,
               review_b: review_b }
           rescue StandardError => e
-            log.warn(e.message) if respond_to?(:log, true)
+            log.warn(e.message) if respond_to?(:log, true) # rubocop:disable Legion/HelperMigration/LoggingGuard
             { reviewed: false, reason: "experiment error: #{e.message}" }
           end
 

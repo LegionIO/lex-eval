@@ -6,6 +6,7 @@ gemspec
 group :development do
   gem 'rspec', '~> 3.0'
   gem 'rubocop', '~> 1.0'
+  gem 'rubocop-legion', '~> 0.1'
   gem 'sequel', '~> 5.0'
   gem 'sqlite3'
 end
