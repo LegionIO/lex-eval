@@ -11,6 +11,7 @@ module Legion
 
           def runner_class = self.class
           def runner_function = 'action'
+          def check_subtask? = true
 
           def action(payload)
             code = payload[:runner_code] || payload[:code]
@@ -30,17 +31,13 @@ module Legion
             result
           rescue StandardError => e
             log.warn("CodeReviewSubscriber failed: #{e.message}")
-            { passed: false, verdict: :reject, error: e.message }
+            { passed: false, verdict: 'reject', error: e.message }
           end
 
           private
 
           def log
-            return Legion::Logging if defined?(Legion::Logging)
-
-            @log ||= Object.new.tap do |nl|
-              %i[debug info warn error fatal].each { |m| nl.define_singleton_method(m) { |*| nil } }
-            end
+            Legion::Logging
           end
         end
       end

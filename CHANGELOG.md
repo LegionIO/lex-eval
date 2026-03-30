@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.13] - 2026-03-30
+
+### Changed
+- update to rubocop-legion 0.1.7, resolve all offenses
+
+## [0.3.12] - 2026-03-29
+
+### Changed
+- `review_generated` now accepts `**extra` splat for task system payload compatibility; `context:` is optional (default `{}`)
+- Verdict values are now strings (`'approve'`, `'reject'`, `'revise'`) instead of symbols for conditioner matching
+- `build_result` passes `code`, `spec_code`, and extra kwargs through to the result hash for downstream consumers
+- `CodeReviewSubscriber` actor enables `check_subtask?` for task system integration
+
 ## [0.3.11] - 2026-03-29
 
 ### Added

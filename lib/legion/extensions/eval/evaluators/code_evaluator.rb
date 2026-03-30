@@ -31,7 +31,7 @@ module Legion
           def valid_json?(str)
             ::JSON.parse(str)
             true
-          rescue ::JSON::ParserError
+          rescue ::JSON::ParserError => _e
             false
           end
         end

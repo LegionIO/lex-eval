@@ -5,6 +5,8 @@ module Legion
     module Eval
       module Runners
         module Annotation
+          extend self
+
           def create_queue(name:, **opts)
             db[:annotation_queues].insert(
               name:                name,
@@ -15,7 +17,7 @@ module Legion
               created_at:          Time.now.utc
             )
             { created: true, name: name }
-          rescue Sequel::UniqueConstraintViolation
+          rescue Sequel::UniqueConstraintViolation => _e
             { error: 'already_exists', name: name }
           end
 

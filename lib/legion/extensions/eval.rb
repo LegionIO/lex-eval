@@ -22,7 +22,7 @@ if defined?(Legion::Transport::Exchange)
   require_relative 'eval/transport/messages/code_review_completed'
 end
 
-require_relative 'eval/actors/code_review_subscriber' if defined?(Legion::Extensions::Actors::Subscription)
+require_relative 'eval/actors/code_review_subscriber'
 
 module Legion
   module Extensions

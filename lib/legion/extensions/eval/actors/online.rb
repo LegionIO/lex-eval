@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'legion/extensions/actors/subscription' unless defined?(Legion::Extensions::Actors::Subscription)
+require 'legion/extensions/actors/subscription'
 
 module Legion
   module Extensions
@@ -30,12 +30,12 @@ module Legion
             false
           end
 
-          def enabled?
-            return false unless defined?(Legion::Transport)
+          def enabled? # rubocop:disable Legion/Extension/ActorEnabledSideEffects
+            return false unless Legion.const_defined?(:Transport, false)
             return false unless defined?(Legion::Extensions::Eval::Runners::Online)
 
             online_enabled?
-          rescue StandardError
+          rescue StandardError => _e
             false
           end
 

@@ -3,7 +3,7 @@
 module Legion
   module Extensions
     module Eval
-      VERSION = '0.3.11'
+      VERSION = '0.3.13'
     end
   end
 end
