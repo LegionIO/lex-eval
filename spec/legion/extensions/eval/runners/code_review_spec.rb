@@ -36,7 +36,7 @@ RSpec.describe Legion::Extensions::Eval::Runners::CodeReview do
     it 'fails fast on syntax error' do
       result = described_class.review_generated(code: syntax_error_code, spec_code: '', context: {})
       expect(result[:passed]).to be false
-      expect(result[:verdict]).to eq(:reject)
+      expect(result[:verdict]).to eq('reject')
       expect(result[:stages][:syntax][:passed]).to be false
     end
 
@@ -58,7 +58,7 @@ RSpec.describe Legion::Extensions::Eval::Runners::CodeReview do
 
       result = described_class.review_generated(code: valid_code, spec_code: valid_spec, context: {})
       expect(result[:passed]).to be true
-      expect(result[:verdict]).to eq(:approve)
+      expect(result[:verdict]).to eq('approve')
       expect(result[:stages][:syntax][:passed]).to be true
       expect(result[:stages][:security][:passed]).to be true
     end

@@ -13,7 +13,7 @@ module Legion
 
           SPEC_TIMEOUT = 30
 
-          def review_generated(code:, spec_code:, context:, review_k: nil, review_models: nil) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
+          def review_generated(code:, spec_code:, context: {}, review_k: nil, review_models: nil, **extra) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/ParameterLists, Metrics/PerceivedComplexity
             settings = validation_settings
             stages = {}
             issues = []
@@ -22,8 +22,9 @@ module Legion
             if settings[:syntax_check] != false
               stages[:syntax] = check_syntax(code, spec_code)
               unless stages[:syntax][:passed]
-                return build_result(passed: false, verdict: :reject, stages: stages,
-                                    issues: stages[:syntax][:errors], confidence: 0.0)
+                return build_result(passed: false, verdict: 'reject', stages: stages,
+                                    issues: stages[:syntax][:errors], confidence: 0.0,
+                                    code: code, spec_code: spec_code, extra: extra)
               end
             end
 
@@ -31,7 +32,8 @@ module Legion
             stages[:security] = check_security(code)
             unless stages[:security][:passed]
               issues.concat(stages[:security][:flagged].map { |f| "security: #{f[:pattern]} on line #{f[:line]}" })
-              return build_result(passed: false, verdict: :reject, stages: stages, issues: issues, confidence: 0.0)
+              return build_result(passed: false, verdict: 'reject', stages: stages, issues: issues, confidence: 0.0,
+                                  code: code, spec_code: spec_code, extra: extra)
             end
 
             # Stage 3: Spec execution (optional)
@@ -39,7 +41,8 @@ module Legion
               stages[:specs] = run_specs(code, spec_code)
               unless stages[:specs][:passed]
                 issues << "specs failed: #{stages[:specs][:output]}"
-                return build_result(passed: false, verdict: :revise, stages: stages, issues: issues, confidence: 0.2)
+                return build_result(passed: false, verdict: 'revise', stages: stages, issues: issues, confidence: 0.2,
+                                    code: code, spec_code: spec_code, extra: extra)
               end
             end
 
@@ -65,9 +68,10 @@ module Legion
             end
 
             confidence = calculate_confidence(stages)
-            verdict = confidence >= 0.5 ? :approve : :revise
+            verdict = confidence >= 0.5 ? 'approve' : 'revise'
 
-            build_result(passed: true, verdict: verdict, stages: stages, issues: issues, confidence: confidence)
+            build_result(passed: true, verdict: verdict, stages: stages, issues: issues, confidence: confidence,
+                         code: code, spec_code: spec_code, extra: extra)
           end
 
           private
@@ -282,8 +286,12 @@ module Legion
             scores
           end
 
-          def build_result(passed:, verdict:, stages:, issues:, confidence:)
-            { passed: passed, verdict: verdict, confidence: confidence, stages: stages, issues: issues }
+          def build_result(passed:, verdict:, stages:, issues:, confidence:, code: nil, spec_code: nil, extra: {}) # rubocop:disable Metrics/ParameterLists
+            result = { passed: passed, verdict: verdict, confidence: confidence, stages: stages, issues: issues }
+            result[:code] = code
+            result[:spec_code] = spec_code
+            extra.each { |k, v| result[k] = v unless result.key?(k) }
+            result
           end
         end
       end
