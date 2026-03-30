@@ -23,18 +23,24 @@ module Legion
             required:   %i[confidence recommendation explanation]
           }.freeze
 
-          def review_output(input:, output:, review_prompt: nil, **)
+          def review_output(input:, output:, review_prompt: nil, model: nil, provider: nil, **) # rubocop:disable Metrics/ParameterLists
             prompt = build_review_message(review_prompt || default_review_prompt, input, output)
-            Legion::LLM.structured(message: prompt, schema: REVIEW_SCHEMA,
-                                   intent: { capability: :reasoning },
-                                   caller: { extension: 'lex-eval', operation: 'agentic_review' })
+            llm_kwargs = {
+              message: prompt, schema: REVIEW_SCHEMA,
+              intent: { capability: :reasoning },
+              caller: { extension: 'lex-eval', operation: 'agentic_review' }
+            }
+            llm_kwargs[:model] = model if model
+            llm_kwargs[:provider] = provider if provider
+            Legion::LLM.structured(**llm_kwargs)
           rescue StandardError => e
             { confidence: 0.0, recommendation: 'reject',
               issues: [], explanation: "review error: #{e.message}" }
           end
 
-          def review_with_escalation(input:, output:, review_prompt: nil, **)
-            review = review_output(input: input, output: output, review_prompt: review_prompt)
+          def review_with_escalation(input:, output:, review_prompt: nil, model: nil, provider: nil, **) # rubocop:disable Metrics/ParameterLists
+            review = review_output(input: input, output: output, review_prompt: review_prompt,
+                                   model: model, provider: provider)
             action, priority = determine_escalation(review[:confidence])
 
             return review.merge(action: :auto_approve, escalated: false) if action == :auto_approve
@@ -42,9 +48,11 @@ module Legion
             review.merge(action: action, escalated: true, priority: priority)
           end
 
-          def review_experiment(input:, output_a:, output_b:, review_prompt: nil, **)
-            review_a = review_output(input: input, output: output_a, review_prompt: review_prompt)
-            review_b = review_output(input: input, output: output_b, review_prompt: review_prompt)
+          def review_experiment(input:, output_a:, output_b:, review_prompt: nil, model: nil, provider: nil, **) # rubocop:disable Metrics/ParameterLists
+            review_a = review_output(input: input, output: output_a, review_prompt: review_prompt,
+                                     model: model, provider: provider)
+            review_b = review_output(input: input, output: output_b, review_prompt: review_prompt,
+                                     model: model, provider: provider)
 
             conf_a = review_a[:confidence] || 0.0
             conf_b = review_b[:confidence] || 0.0

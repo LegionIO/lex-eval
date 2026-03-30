@@ -4,7 +4,7 @@
 
 ### Added
 - Multi-provider model diversity for adversarial K-factor LLM review (`review_models:` kwarg)
-- `build_model_assignments` cycles available providers, skips unavailable with log warning, backfills with default
+- `build_model_assignments` cycles available providers, skips unavailable; falls back to default only when review_models is nil/empty or all providers unavailable
 - `provider_available?` checks `Settings[:llm][:providers][sym][:enabled]`
 - `llm_review` accepts `model_spec:` and forwards `model:`/`provider:` to `AgenticReview.review_output`
 - Settings fallback: `codegen.self_generate.validation.review_models` (default `[]`)

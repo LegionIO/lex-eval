@@ -222,6 +222,21 @@ RSpec.describe Legion::Extensions::Eval::Runners::CodeReview do
           )
           expect(result[:stages][:llm_review][:k]).to eq(3)
         end
+
+        it 'passes different model specs to each review' do
+          specs_received = []
+          allow(described_class).to receive(:llm_review) do |_code, _ctx, model_spec:|
+            specs_received << model_spec
+            { confidence: 0.8, issues: [], passed: true }
+          end
+
+          described_class.review_generated(
+            code: 'puts 1', spec_code: '', context: {},
+            review_k: 3, review_models: models
+          )
+          # 2 models cycling across 3 slots: [bedrock, openai, bedrock]
+          expect(specs_received.map { |s| s&.dig(:provider) }).to eq(%i[bedrock openai bedrock])
+        end
       end
 
       context 'when a provider is unavailable' do
