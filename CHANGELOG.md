@@ -9,7 +9,7 @@
 - `llm_review` accepts `model_spec:` and forwards `model:`/`provider:` to `AgenticReview.review_output`
 - Settings fallback: `codegen.self_generate.validation.review_models` (default `[]`)
 
-## [0.3.10] - 2026-03-29
+## [0.3.10] - 2026-03-28
 
 ### Added
 - K-factor adversarial LLM review (`review_k:` kwarg, default 1)

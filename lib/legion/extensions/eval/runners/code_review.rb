@@ -218,7 +218,7 @@ module Legion
             )
 
             {
-              passed:     result[:reviewed] != false,
+              passed:     result[:recommendation] == 'approve',
               issues:     result[:issues] || [],
               confidence: result[:confidence] || 0.5,
               provider:   model_spec&.dig(:provider),
