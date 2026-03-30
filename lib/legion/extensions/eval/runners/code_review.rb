@@ -50,7 +50,7 @@ module Legion
               stages[:llm_review] = if k > 1
                                       adversarial_llm_review(code, context, count: k, models: models)
                                     else
-                                      llm_review(code, context, model_spec: models&.first)
+                                      llm_review(code, context, model_spec: build_model_assignments(1, models)&.first)
                                     end
               issues.concat(stages[:llm_review][:issues] || [])
             end

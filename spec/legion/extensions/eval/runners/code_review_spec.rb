@@ -255,13 +255,21 @@ RSpec.describe Legion::Extensions::Eval::Runners::CodeReview do
           )
         end
 
-        it 'skips unavailable providers and backfills' do
+        it 'skips unavailable providers and cycles remaining available ones' do
+          specs_received = []
+          allow(described_class).to receive(:llm_review) do |_code, _ctx, model_spec:|
+            specs_received << model_spec
+            { confidence: 0.8, issues: [], passed: true }
+          end
+
           result = described_class.review_generated(
             code: 'puts 1', spec_code: '', context: {},
             review_k: 3, review_models: models
           )
-          # Only bedrock available, so all 3 slots use bedrock
+          # openai skipped — all 3 slots use bedrock
           expect(result[:stages][:llm_review][:k]).to eq(3)
+          expect(specs_received.map { |s| s&.dig(:provider) }).to all(eq(:bedrock))
+          expect(specs_received.map { |s| s&.dig(:provider) }).not_to include(:openai)
         end
       end
 
@@ -275,6 +283,48 @@ RSpec.describe Legion::Extensions::Eval::Runners::CodeReview do
             review_k: 2, review_models: []
           )
           expect(result[:stages][:llm_review][:k]).to eq(2)
+        end
+      end
+
+      context 'when review_k is 1 with review_models' do
+        let(:models) do
+          [
+            { provider: :azure, model: 'gpt-4o' },
+            { provider: :bedrock, model: 'claude-sonnet' }
+          ]
+        end
+
+        it 'uses the first available model when the first entry is disabled' do
+          allow(described_class).to receive(:provider_available?).with(:azure).and_return(false)
+          allow(described_class).to receive(:provider_available?).with(:bedrock).and_return(true)
+
+          spec_received = nil
+          allow(described_class).to receive(:llm_review) do |_code, _ctx, model_spec:|
+            spec_received = model_spec
+            { confidence: 0.8, issues: [], passed: true }
+          end
+
+          described_class.review_generated(
+            code: 'puts 1', spec_code: '', context: {},
+            review_k: 1, review_models: models
+          )
+          expect(spec_received&.dig(:provider)).to eq(:bedrock)
+        end
+
+        it 'falls back to nil model_spec when all providers are unavailable' do
+          allow(described_class).to receive(:provider_available?).and_return(false)
+
+          spec_received = :unset
+          allow(described_class).to receive(:llm_review) do |_code, _ctx, model_spec:|
+            spec_received = model_spec
+            { confidence: 0.8, issues: [], passed: true }
+          end
+
+          described_class.review_generated(
+            code: 'puts 1', spec_code: '', context: {},
+            review_k: 1, review_models: models
+          )
+          expect(spec_received).to be_nil
         end
       end
     end
