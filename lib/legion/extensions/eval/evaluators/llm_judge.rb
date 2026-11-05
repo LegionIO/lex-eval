@@ -22,7 +22,7 @@ module Legion
             required:   %i[score passed explanation]
           }.freeze
 
-          def evaluate(input:, output:, expected: nil, context: {}) # rubocop:disable Lint/UnusedMethodArgument
+          def evaluate(input:, output:, expected: nil, **)
             if defined?(Legion::Telemetry::OpenInference)
               Legion::Telemetry::OpenInference.evaluator_span(template: @config[:name] || 'unknown') do |_span|
                 evaluate_impl(input: input, output: output, expected: expected)

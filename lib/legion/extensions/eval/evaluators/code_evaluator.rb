@@ -8,7 +8,7 @@ module Legion
     module Eval
       module Evaluators
         class CodeEvaluator < Base
-          def evaluate(input:, output:, expected: nil, context: {}) # rubocop:disable Lint/UnusedMethodArgument
+          def evaluate(output:, **)
             checks = @config[:checks] || []
             failures = checks.reject { |check| run_check(check, output.to_s) }
             score = checks.empty? ? 1.0 : (checks.size - failures.size).to_f / checks.size
