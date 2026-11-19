@@ -7,7 +7,8 @@ RSpec.describe Legion::Extensions::Eval::Runners::AgenticReview do
 
   before do
     stub_const('Legion::LLM', Class.new do
-      def self.structured(**); end
+      # Mirrors Legion::LLM.structured(messages:, schema:, **) so a wrong keyword fails.
+      def self.structured(messages:, schema:, **); end
 
       def self.respond_to_missing?(name, *)
         name == :structured || super
@@ -21,7 +22,7 @@ RSpec.describe Legion::Extensions::Eval::Runners::AgenticReview do
         issues: [], explanation: 'Output is well-structured.' }
     end
 
-    before { allow(Legion::LLM).to receive(:structured).and_return(review_result) }
+    before { allow(Legion::LLM).to receive(:structured).and_return({ data: review_result, valid: true }) }
 
     it 'returns review with confidence and recommendation' do
       result = host.review_output(input: 'question', output: 'answer')
@@ -32,8 +33,25 @@ RSpec.describe Legion::Extensions::Eval::Runners::AgenticReview do
     it 'uses custom review prompt when provided' do
       host.review_output(input: 'q', output: 'a', review_prompt: 'Be strict.')
       expect(Legion::LLM).to have_received(:structured).with(
-        hash_including(message: include('Be strict.'))
+        hash_including(messages: [hash_including(role: 'user', content: include('Be strict.'))])
       )
+    end
+    it 'returns the review when structured output has string keys' do
+      allow(Legion::LLM).to receive(:structured).and_return(
+        { data:  { 'confidence' => 0.8, 'recommendation' => 'approve', 'issues' => [], 'explanation' => 'ok' },
+          valid: true }
+      )
+      result = host.review_output(input: 'q', output: 'a')
+      expect(result[:confidence]).to eq(0.8)
+      expect(result[:recommendation]).to eq('approve')
+    end
+
+    it 'rejects when structured output is invalid' do
+      allow(Legion::LLM).to receive(:structured).and_return({ data: nil, valid: false, error: 'JSON parse failed' })
+      result = host.review_output(input: 'q', output: 'a')
+      expect(result[:confidence]).to eq(0.0)
+      expect(result[:recommendation]).to eq('reject')
+      expect(result[:explanation]).to include('JSON parse failed')
     end
   end
 
@@ -41,7 +59,7 @@ RSpec.describe Legion::Extensions::Eval::Runners::AgenticReview do
     context 'high confidence (> 0.9)' do
       before do
         allow(Legion::LLM).to receive(:structured).and_return(
-          { confidence: 0.95, recommendation: 'approve', issues: [], explanation: 'Good.' }
+          { data: { confidence: 0.95, recommendation: 'approve', issues: [], explanation: 'Good.' }, valid: true }
         )
       end
 
@@ -55,8 +73,8 @@ RSpec.describe Legion::Extensions::Eval::Runners::AgenticReview do
     context 'medium confidence (0.6-0.9)' do
       before do
         allow(Legion::LLM).to receive(:structured).and_return(
-          { confidence: 0.75, recommendation: 'revise',
-            issues: [{ severity: 'minor', description: 'typo' }], explanation: 'Mostly fine.' }
+          { data: { confidence: 0.75, recommendation: 'revise',
+            issues: [{ severity: 'minor', description: 'typo' }], explanation: 'Mostly fine.' }, valid: true }
         )
       end
 
@@ -71,8 +89,8 @@ RSpec.describe Legion::Extensions::Eval::Runners::AgenticReview do
     context 'low confidence (< 0.6)' do
       before do
         allow(Legion::LLM).to receive(:structured).and_return(
-          { confidence: 0.3, recommendation: 'reject',
-            issues: [{ severity: 'critical', description: 'wrong' }], explanation: 'Bad.' }
+          { data: { confidence: 0.3, recommendation: 'reject',
+            issues: [{ severity: 'critical', description: 'wrong' }], explanation: 'Bad.' }, valid: true }
         )
       end
 
@@ -92,9 +110,9 @@ RSpec.describe Legion::Extensions::Eval::Runners::AgenticReview do
         allow(Legion::LLM).to receive(:structured) do
           call_count += 1
           if call_count == 1
-            { confidence: 0.9, recommendation: 'approve', issues: [], explanation: 'Excellent.' }
+            { data: { confidence: 0.9, recommendation: 'approve', issues: [], explanation: 'Excellent.' }, valid: true }
           else
-            { confidence: 0.6, recommendation: 'revise', issues: [], explanation: 'Decent.' }
+            { data: { confidence: 0.6, recommendation: 'revise', issues: [], explanation: 'Decent.' }, valid: true }
           end
         end
       end
@@ -117,9 +135,9 @@ RSpec.describe Legion::Extensions::Eval::Runners::AgenticReview do
         allow(Legion::LLM).to receive(:structured) do
           call_count += 1
           if call_count == 1
-            { confidence: 0.5, recommendation: 'revise', issues: [], explanation: 'Weak.' }
+            { data: { confidence: 0.5, recommendation: 'revise', issues: [], explanation: 'Weak.' }, valid: true }
           else
-            { confidence: 0.85, recommendation: 'approve', issues: [], explanation: 'Strong.' }
+            { data: { confidence: 0.85, recommendation: 'approve', issues: [], explanation: 'Strong.' }, valid: true }
           end
         end
       end
@@ -142,9 +160,9 @@ RSpec.describe Legion::Extensions::Eval::Runners::AgenticReview do
         allow(Legion::LLM).to receive(:structured) do
           call_count += 1
           if call_count == 1
-            { confidence: 0.8, recommendation: 'approve', issues: [], explanation: 'Good.' }
+            { data: { confidence: 0.8, recommendation: 'approve', issues: [], explanation: 'Good.' }, valid: true }
           else
-            { confidence: 0.78, recommendation: 'approve', issues: [], explanation: 'Good too.' }
+            { data: { confidence: 0.78, recommendation: 'approve', issues: [], explanation: 'Good too.' }, valid: true }
           end
         end
       end
@@ -162,9 +180,9 @@ RSpec.describe Legion::Extensions::Eval::Runners::AgenticReview do
         allow(Legion::LLM).to receive(:structured) do
           call_count += 1
           if call_count == 1
-            { confidence: 0.9, recommendation: 'approve', issues: [], explanation: 'A is great.' }
+            { data: { confidence: 0.9, recommendation: 'approve', issues: [], explanation: 'A is great.' }, valid: true }
           else
-            { confidence: 0.6, recommendation: 'revise', issues: [], explanation: 'B is ok.' }
+            { data: { confidence: 0.6, recommendation: 'revise', issues: [], explanation: 'B is ok.' }, valid: true }
           end
         end
       end

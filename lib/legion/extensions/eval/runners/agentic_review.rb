@@ -26,13 +26,16 @@ module Legion
           def review_output(input:, output:, review_prompt: nil, model: nil, provider: nil, **)
             prompt = build_review_message(review_prompt || default_review_prompt, input, output)
             llm_kwargs = {
-              message: prompt, schema: REVIEW_SCHEMA,
+              messages: [{ role: 'user', content: prompt }], schema: REVIEW_SCHEMA,
               intent: { capability: :reasoning },
               caller: { extension: 'lex-eval', operation: 'agentic_review' }
             }
             llm_kwargs[:model] = model if model
             llm_kwargs[:provider] = provider if provider
-            Legion::LLM.structured(**llm_kwargs) # rubocop:disable Legion/HelperMigration/DirectLlm
+            result = Legion::LLM.structured(**llm_kwargs) # rubocop:disable Legion/HelperMigration/DirectLlm
+            raise "structured output invalid: #{result[:error]}" unless result[:valid] && result[:data].is_a?(Hash)
+
+            result[:data].transform_keys(&:to_sym)
           rescue StandardError => e
             log.warn(e.message) if respond_to?(:log, true) # rubocop:disable Legion/HelperMigration/LoggingGuard
             { confidence: 0.0, recommendation: 'reject',

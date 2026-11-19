@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.14] - 2026-11-05
+
+### Fixed
+- `agentic_review#review_output` calls `Legion::LLM.structured` with `messages:` instead of `message:` (which raised `ArgumentError` on every call) and unwraps the `{data:, valid:}` envelope, so `review_with_escalation` reads a real `confidence`; invalid structured output still fails closed to `reject` (#6)
+
+### Changed
+- `CodeEvaluator#evaluate` and `LlmJudge#evaluate` take `**` for unused keyword args instead of disabling `Lint/UnusedMethodArgument` (rubocop-legion 0.1.11 `Legion/Framework/NoUnusedArgDisable`)
+
 ## [0.3.13] - 2026-03-30
 
 ### Changed
